@@ -1,0 +1,23 @@
+# Ignore build artifacts
+stalin
+stalin.c
+include/gc.h
+include/gc_config_macros.h
+include/libgc.a
+include/libstalin.a
+gc6.8/
+
+# Ignore git
+.git/
+.gitignore
+
+# Ignore macOS specific files
+.DS_Store
+*.tmp
+
+# Ignore any existing binaries
+*.o
+*.a
+benchmarks/hello
+benchmarks/xhello
+benchmarks/*-test
