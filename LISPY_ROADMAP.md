@@ -6,7 +6,7 @@ Transform Stalin from a historic, optimization-focused Scheme compiler into **Li
 
 ## Project Phases
 
-### Phase 1: Foundation (Current - Q1 2024)
+### Phase 1: Foundation (Current - Q4 2025)
 **Goal**: Establish modern development infrastructure
 
 #### ✅ Completed
@@ -26,7 +26,7 @@ Transform Stalin from a historic, optimization-focused Scheme compiler into **Li
 - [ ] Native ARM64 code generation
 - [ ] Comprehensive test suite
 
-### Phase 2: Modernization (Q2 2024)
+### Phase 2: Modernization (Q1 2026)
 **Goal**: Update Stalin for modern systems
 
 #### Build System
@@ -46,7 +46,7 @@ Transform Stalin from a historic, optimization-focused Scheme compiler into **Li
 - [ ] Memory safety improvements
 - [ ] Static analysis integration
 
-### Phase 3: Developer Experience (Q3 2024)
+### Phase 3: Developer Experience (Q2 2026)
 **Goal**: Make Stalin/Lispy accessible to modern developers
 
 #### Interactive Development
@@ -68,7 +68,7 @@ Transform Stalin from a historic, optimization-focused Scheme compiler into **Li
 - [ ] Build tool (like Cargo/npm)
 - [ ] Project templates
 
-### Phase 4: Lispy Core (Q4 2024)
+### Phase 4: Lispy Core (Q3 2026)
 **Goal**: Evolve into Lispy language
 
 #### Language Features
@@ -92,7 +92,7 @@ Transform Stalin from a historic, optimization-focused Scheme compiler into **Li
 - [ ] Database interfaces
 - [ ] Web framework
 
-### Phase 5: Performance & Scale (2025)
+### Phase 5: Performance & Scale (2027)
 **Goal**: Next-generation performance
 
 #### Compilation
@@ -172,12 +172,12 @@ Lispy Compiler
 2. GitHub Actions CI/CD
 3. First binary release
 
-### Medium Term (Q2 2024)
+### Medium Term (Q1 2026)
 1. Basic REPL
 2. VS Code extension
 3. Package repository
 
-### Long Term (2024+)
+### Long Term (2026+)
 1. Full Lispy language
 2. Production readiness
 3. Community building
@@ -240,12 +240,12 @@ docker run -it --rm -v $(pwd):/stalin stalin-dev
 ## Timeline
 
 ```
-2024 Q1: Foundation - Modern build, Docker, testing
-2024 Q2: Modernization - ARM64, CMake, warnings
-2024 Q3: Developer UX - REPL, VS Code, packages
-2024 Q4: Lispy Core - Language features, stdlib
-2025 Q1: Performance - JIT, optimization
-2025 Q2: Production - 1.0 release
+2025 Q4: Foundation - Modern build, Docker, testing
+2026 Q1: Modernization - ARM64, CMake, warnings
+2026 Q2: Developer UX - REPL, VS Code, packages
+2026 Q3: Lispy Core - Language features, stdlib
+2027 Q1: Performance - JIT, optimization
+2027 Q2: Production - 1.0 release
 ```
 
 ## Conclusion

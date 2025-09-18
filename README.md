@@ -140,19 +140,19 @@ Stalin is a whole-program optimizing Scheme compiler created by Jeffrey Mark Sis
 
 **Lispy** will evolve Stalin into a modern, developer-friendly Lisp platform:
 
-### Near Term (2024 Q1)
+### Near Term (Q4 2025)
 - [ ] Complete ARM64 native support
 - [ ] CMake build system
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Comprehensive test suite
 
-### Medium Term (2024 Q2)
+### Medium Term (Q1 2026)
 - [ ] Basic REPL functionality
 - [ ] Module system
 - [ ] Package manager integration
 - [ ] VS Code extension
 
-### Long Term (2024+)
+### Long Term (2026+)
 - [ ] JIT compilation option
 - [ ] Incremental compilation
 - [ ] Advanced debugging tools
