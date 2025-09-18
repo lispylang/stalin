@@ -1,0 +1,18 @@
+--- a/include/private/gcconfig.h
++++ b/include/private/gcconfig.h
+@@ -474,7 +474,15 @@
+ #   endif
+ #   if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
+ #     define ARM32
+-        --> unknown machine type
++#     ifdef __LP64__
++#       undef ARM32
++#       define AARCH64
++#       define mach_type_known
++#       define CPP_WORDSZ 64
++#       define ALIGNMENT 8
++#     else
++#       define mach_type_known
++#     endif
+ #   endif
+ # endif
