@@ -1,0 +1,5 @@
+(write-string "Hello from Stalin Scheme!")
+(newline)
+(write-string "Testing basic arithmetic: ")
+(write (+ 2 3 (* 4 5)))
+(newline)
