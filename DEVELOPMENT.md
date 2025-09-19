@@ -47,7 +47,7 @@ docker run -it --rm -v $(pwd):/stalin stalin-dev ./build-modern
 ## Key Improvements Made
 
 ### 1. Docker Environment
-- Ubuntu 20.04 base with GCC 7.x
+- Ubuntu 22.04 LTS base with GCC 11.x
 - All necessary development dependencies
 - Automated testing workflow
 
@@ -91,7 +91,7 @@ docker run -it --rm -v $(pwd):/stalin stalin-dev ./test-docker.sh
 
 # Test specific components
 cd benchmarks
-./compile-and-run-stalin-benchmarks
+./compile-and-run-stalin-benchmark
 ```
 
 ## Known Issues
@@ -119,7 +119,7 @@ stalin/
 ├── source/               # Scheme source files
 ├── include/              # C headers and libraries
 ├── benchmarks/           # Test programs
-└── stalin.sc             # Main compiler source (32K+ lines)
+└── stalin.sc             # Main compiler source (32,905 lines)
 ```
 
 ## Next Steps
