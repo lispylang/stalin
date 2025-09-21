@@ -50,6 +50,9 @@ WORKDIR /stalin
 # Copy Stalin source files
 COPY stalin.sc stalin-IA32.c stalin-architecture.c ./
 COPY include/*.sc ./
+# Replace problematic xlib.sc with minimal version
+COPY include/xlib-minimal.sc ./
+RUN mv xlib-minimal.sc xlib.sc
 COPY include/ ./include/
 COPY benchmarks/ ./benchmarks/
 COPY makefile makefile.modern ./

@@ -1,4 +1,2 @@
-#!/bin/sh
-# Architecture name helper for Stalin
-# Returns IA32 as we're using the IA32 generated code
-echo "IA32"
+#\!/bin/sh
+echo "AMD64"
