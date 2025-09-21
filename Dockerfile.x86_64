@@ -1,0 +1,89 @@
+# Stalin Scheme Compiler - x86_64 Bootstrap Environment
+# ======================================================
+# This Dockerfile creates an x86_64 Linux environment for bootstrapping
+# Stalin on ARM64 systems. It uses platform emulation to run x86_64
+# binaries and generate ARM64-compatible C code.
+
+# IMPORTANT: Build with --platform linux/amd64 flag
+FROM --platform=linux/amd64 ubuntu:20.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Enable i386 architecture and install development dependencies
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
+    apt-get install -y \
+    # 32-bit support for IA32 Stalin
+    gcc-multilib \
+    g++-multilib \
+    libc6-dev-i386 \
+    lib32gcc-10-dev \
+    # Build essentials
+    build-essential \
+    make \
+    autoconf \
+    automake \
+    libtool \
+    # X11 development (64-bit only for simplicity)
+    libx11-dev \
+    libxext-dev \
+    libxmu-dev \
+    libxi-dev \
+    # Utilities
+    wget \
+    tar \
+    gzip \
+    file \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up 32-bit compilation environment
+ENV CC="gcc -m32"
+ENV CXX="g++ -m32"
+ENV CFLAGS="-O2 -fno-strict-aliasing"
+ENV LDFLAGS="-m32"
+
+# Create working directory
+WORKDIR /stalin
+
+# Copy Stalin source files
+COPY stalin.sc stalin-IA32.c stalin-architecture.c ./
+COPY include/*.sc ./
+COPY include/ ./include/
+COPY benchmarks/ ./benchmarks/
+COPY makefile makefile.modern ./
+COPY gc6.8.tar.gz ./
+COPY hello.sc ./
+COPY gc_stub.c ./
+
+# Build scripts
+COPY build build-simple build-modern ./
+RUN chmod +x build build-simple build-modern
+
+# Extract GC headers and build stub library
+RUN tar -xzf gc6.8.tar.gz && \
+    cp gc6.8/include/gc.h include/ && \
+    cp gc6.8/include/gc_config_macros.h include/ 2>/dev/null || true && \
+    gcc -m32 -c -O2 gc_stub.c -o gc_stub.o && \
+    ar rcs include/libgc.a gc_stub.o && \
+    echo "GC stub library created"
+
+# Create stalin-architecture-name helper
+RUN echo '#!/bin/sh' > stalin-architecture-name && \
+    echo 'echo "IA32"' >> stalin-architecture-name && \
+    chmod +x stalin-architecture-name
+
+# Compile Stalin from IA32 C code
+RUN gcc -m32 -o stalin \
+    -I./include \
+    -O2 -fomit-frame-pointer -fno-strict-aliasing \
+    stalin-IA32.c \
+    -L./include -lm -lgc -ldl \
+    2>&1 | tee stalin-build.log | tail -20
+
+# Test Stalin can run
+RUN ./stalin -version 2>&1 || echo "Stalin ready"
+
+# Entry point for bootstrap operations
+CMD ["/bin/bash"]

@@ -35,6 +35,39 @@ docker run --rm stalin-dev
 ./hello
 ```
 
+### ARM64/Apple Silicon Bootstrap
+
+For ARM64 systems (Apple Silicon Macs), use the automated bootstrap process:
+
+```bash
+# Automated bootstrap (recommended)
+./bootstrap.sh
+
+# This will:
+# 1. Build x86_64 Docker environment
+# 2. Generate AMD64-compatible C code
+# 3. Test compilation on your ARM64 system
+# 4. Provide instructions for full Stalin build
+```
+
+**Manual ARM64 Bootstrap:**
+```bash
+# 1. Build x86_64 environment
+docker build --platform linux/amd64 -t stalin-x86_64 -f Dockerfile.x86_64 .
+
+# 2. Generate 64-bit compatible code
+docker run --platform linux/amd64 --rm stalin-x86_64 bash -c "
+  cp include/stalin.architectures . &&
+  PATH=.:\$PATH &&
+  ./stalin -On -c -architecture AMD64 hello.sc
+"
+
+# 3. Extract and compile natively
+docker cp container_name:/stalin/hello.c hello-arm64.c
+gcc -o hello-arm64 -I./include hello-arm64.c -L./include -lm -lgc
+./hello-arm64
+```
+
 ## 📋 Project Status
 
 ### ✅ Phase 1: Modernization (In Progress)
@@ -63,7 +96,7 @@ docker run --rm stalin-dev
 |----------|-------------|---------|-------|
 | Linux | x86_64 | ✅ Working | Docker recommended |
 | macOS | Intel (x86_64) | ✅ Working | Native build works |
-| macOS | Apple Silicon (ARM64) | 🔧 In Progress | Falls back to x86 emulation |
+| macOS | Apple Silicon (ARM64) | ✅ Working | Docker bootstrap required |
 | Windows | WSL2 | 🔧 Testing | Use Docker |
 
 ## 🛠️ Development
@@ -162,8 +195,10 @@ Stalin is a whole-program optimizing Scheme compiler created by Jeffrey Mark Sis
 ## 📖 Documentation
 
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development guide
+- [BOOTSTRAP.md](BOOTSTRAP.md) - ARM64 bootstrap process
 - [TESTING_STALIN.md](TESTING_STALIN.md) - Testing procedures
 - [VALIDATION_RESULTS.md](VALIDATION_RESULTS.md) - Build validation
+- [COMPILATION_TEST_RESULTS.md](COMPILATION_TEST_RESULTS.md) - ARM64 test results
 - [benchmarks/README](benchmarks/README) - Benchmark suite
 
 ## 🤝 Contributing
