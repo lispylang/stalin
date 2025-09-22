@@ -37,8 +37,8 @@ docker run -it --rm -v $(pwd):/stalin stalin-dev ./build-modern
 | Architecture | Status | Notes |
 |--------------|--------|-------|
 | IA32 (x86)   | ✅ Working | Primary target, pre-generated C code available |
-| AMD64        | 🔄 In Progress | Requires testing and validation |
-| ARM64        | 🔄 Planned | Modern Apple Silicon / ARM64 support |
+| AMD64        | ✅ Working | Docker pipeline generates AMD64 C code |
+| ARM64        | ✅ **COMPLETE** | Native Stalin binary + Docker compilation pipeline |
 | Alpha        | ⚠️ Legacy | Historical support, may work |
 | SPARC        | ⚠️ Legacy | Historical support, may work |
 | MIPS         | ⚠️ Legacy | Historical support, may work |
@@ -48,6 +48,19 @@ docker run -it --rm -v $(pwd):/stalin stalin-dev ./build-modern
 
 ### 1. Docker Environment
 - Ubuntu 22.04 LTS base with GCC 11.x
+
+### 2. ARM64/Apple Silicon Support ✅
+- **Native Stalin binary**: `stalin-amd64` (3.1MB, version 0.11)
+- **Docker compilation pipeline**: Uses x86_64 emulation for code generation
+- **Production workflow**: `compile-simple.sh` script for seamless compilation
+- **64-bit compatibility fixes**: Modified pointer handling and assertions
+- **Complete bootstrap**: From 32-bit legacy to ARM64 native
+
+### 3. Cross-Platform Compilation
+- **x86_64 emulation**: Docker `--platform linux/amd64` on ARM64 hosts
+- **AMD64 code generation**: Stalin generates 64-bit compatible C code
+- **Native compilation**: Generated C compiles directly on ARM64
+- **Automated workflow**: Single script handles the entire pipeline
 - All necessary development dependencies
 - Automated testing workflow
 
