@@ -3,3 +3,35 @@
 /include/stalin
 /stalin
 /stalin.c
+
+# Backup files
+*.bak
+*.bak2
+*.bak3
+*.final
+
+# Debug files
+*-debug
+*-debug.c
+
+# Object files
+*.o
+
+# Test files
+test-*.sc
+
+# Generated binaries and C files
+hello
+hello.c
+hello-amd64
+hello-amd64.c
+
+# Manual conversion attempts
+stalin-arm64-manual.c
+
+# Duplicate files
+stalin.architectures
+gc_stub.c
+
+# Extracted GC source (use gc6.8.tar.gz instead)
+gc6.8/
