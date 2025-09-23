@@ -192,6 +192,7 @@ Stalin is a whole-program optimizing Scheme compiler created by Jeffrey Mark Sis
 ## 📖 Documentation
 
 - [USAGE.md](USAGE.md) - **Complete usage guide and examples**
+- [VALIDATION_CHECKLIST.md](VALIDATION_CHECKLIST.md) - **✅ ARM64 validation checklist**
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development guide
 - [BOOTSTRAP.md](BOOTSTRAP.md) - ARM64 bootstrap process (completed)
 - [TESTING_STALIN.md](TESTING_STALIN.md) - Testing procedures
@@ -203,7 +204,7 @@ Stalin is a whole-program optimizing Scheme compiler created by Jeffrey Mark Sis
 
 We welcome contributions! Priority areas:
 
-1. **Architecture support**: Help with ARM64/M1/M2 native code generation
+1. **Platform expansion**: Help with Windows WSL2 support and other platforms
 2. **Build system**: CMake conversion
 3. **Testing**: Expand test coverage
 4. **Documentation**: Tutorials and examples
