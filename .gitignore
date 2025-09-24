@@ -35,3 +35,9 @@ gc_stub.c
 
 # Extracted GC source (use gc6.8.tar.gz instead)
 gc6.8/
+
+# Validation and test result files
+VALIDATION_*.md
+TEST_RESULTS.md
+COMPILATION_TEST_RESULTS.md
+
