@@ -298,7 +298,21 @@ echo "Flags: $ARCH_OPTS $MODERN_CFLAGS"
 echo "Expected warnings: pointer size mismatches (harmless on 64-bit systems)"
 echo ""
 
-# Start the compilation using the makefile
-# ARCH_OPTS: Architecture-specific optimization flags
-# CC: Compiler to use (gcc)
-make ARCH_OPTS="$ARCH_OPTS $MODERN_CFLAGS" CC="gcc"
+# Compile stalin.c directly to avoid circular makefile dependency
+# The makefile expects ./stalin to exist to compile stalin.c, but we need to create ./stalin first
+echo "Compiling stalin.c to stalin executable..."
+gcc -o stalin -I./include -O3 -fomit-frame-pointer \
+    -fno-strict-aliasing $MODERN_CFLAGS $ARCH_OPTS \
+    stalin.c -L./include -lm -lgc -lstalin
+
+if [ -f "stalin" ]; then
+    echo "✅ Stalin executable created successfully!"
+    # Run post-make script if it exists
+    if [ -f "post-make" ]; then
+        ./post-make
+    fi
+else
+    echo "❌ Failed to create Stalin executable"
+    echo "Check compiler errors above"
+    exit 1
+fi

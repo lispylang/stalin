@@ -358,5 +358,21 @@ fi
 echo "Compiling Stalin compiler (this may take several minutes)..."
 echo "Note: Many pointer size warnings are expected and harmless on 64-bit systems"
 
-# Use exec to replace current shell with make process for cleaner output
-exec make ARCH_OPTS="$ARCH_OPTS $MODERN_CFLAGS" CC="gcc"
+# Compile stalin.c directly to avoid circular makefile dependency
+echo "Compiling stalin.c to stalin executable..."
+gcc -o stalin -I./include -O3 -fomit-frame-pointer \
+    -fno-strict-aliasing $MODERN_CFLAGS $ARCH_OPTS \
+    stalin.c -L./include -lm -lgc -lstalin
+
+if [ -f "stalin" ]; then
+    echo "✅ Stalin executable created successfully!"
+    # Run post-make script if it exists
+    if [ -f "post-make" ]; then
+        ./post-make
+    fi
+    echo "🎉 Stalin build completed!"
+else
+    echo "❌ Failed to create Stalin executable"
+    echo "Check compiler errors above"
+    exit 1
+fi
