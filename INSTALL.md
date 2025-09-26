@@ -189,6 +189,31 @@ make distclean
 make docker-build
 ```
 
+### macOS Docker File Sharing Error
+
+If you get `Mounts denied: The path ... is not shared from the host`:
+
+**Solution 1 (Recommended):**
+1. Open **Docker Desktop** → **Settings** (gear icon)
+2. Go to **Resources** → **File sharing**
+3. Click **+** and add your project directory path
+4. Click **Apply & restart**
+
+**Solution 2 (Alternative):**
+```bash
+# Create symlink in shared directory
+ln -s /path/to/stalin ~/Desktop/stalin
+cd ~/Desktop/stalin
+# Now Docker commands will work
+```
+
+**Solution 3 (Move project):**
+```bash
+# Move to standard shared directory
+mv /Applications/lispylang/stalin ~/Documents/stalin
+cd ~/Documents/stalin
+```
+
 ### Permission Issues
 
 ```bash
