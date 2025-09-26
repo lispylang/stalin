@@ -1,227 +1,200 @@
-# Stalin/Lispy Usage Guide
+# Stalin Usage Guide
 
-## 🚀 Quick Start
+## Basic Compilation
 
-### **ARM64/Apple Silicon Users** (Recommended)
+The simplest way to compile Scheme programs:
+
 ```bash
-# Compile any Scheme program
-./compile-simple.sh hello.sc
-./hello
-
-# Try more examples
-./compile-simple.sh benchmarks/factorial.sc
-./factorial
+./compile-simple.sh program.sc
+./program
 ```
 
-### **Intel/x86_64 Users**
-```bash
-# Direct compilation
-./stalin -On hello.sc
-./hello
+## Examples
 
-# Or use Docker for consistency
+### Hello World
+```bash
+echo '(display "Hello, World!")' > hello.sc
 ./compile-simple.sh hello.sc
 ./hello
 ```
 
-## 📋 Compilation Workflow
-
-### **The `compile-simple.sh` Script**
-This is the recommended way to compile Scheme programs on all platforms:
-
+### Factorial Function
 ```bash
-./compile-simple.sh <program.sc>
-```
-
-**What it does:**
-1. **Creates Docker container** with x86_64 Stalin
-2. **Copies your .sc file** into the container
-3. **Generates C code** using Stalin with AMD64 architecture
-4. **Extracts the C code** back to your system
-5. **Compiles natively** using your system's GCC
-6. **Creates optimized binary** ready to run
-
-### **Manual Compilation** (Advanced)
-```bash
-# 1. Generate C code using Docker
-CONTAINER_ID=$(docker run --platform linux/amd64 -d stalin-x86_64 sleep 300)
-docker cp hello.sc ${CONTAINER_ID}:/stalin/
-docker exec ${CONTAINER_ID} bash -c "
-    cp include/stalin.architectures .
-    PATH=.:\$PATH
-    ./stalin -On -c -architecture AMD64 hello.sc
-"
-docker cp ${CONTAINER_ID}:/stalin/hello.c ./hello.c
-docker rm -f ${CONTAINER_ID}
-
-# 2. Compile natively
-gcc -o hello -I./include -O2 hello.c -L./include -lm -lgc
-./hello
-```
-
-## 🎯 Examples
-
-### **Hello World**
-```scheme
-;; hello.sc
-(display "Hello, World!")
-(newline)
-```
-```bash
-./compile-simple.sh hello.sc
-./hello  # Output: Hello, World!
-```
-
-### **Factorial**
-```scheme
-;; factorial.sc
+cat > factorial.sc << 'EOF'
 (define (factorial n)
   (if (zero? n)
       1
       (* n (factorial (- n 1)))))
 
-(display "10! = ")
 (display (factorial 10))
 (newline)
-```
-```bash
+EOF
+
 ./compile-simple.sh factorial.sc
-./factorial  # Output: 10! = 3628800
+./factorial
+# Output: 3628800
 ```
 
-### **Fibonacci**
-```scheme
-;; fibonacci.sc
-(define (fibonacci n)
-  (if (<= n 1)
-      n
-      (+ (fibonacci (- n 1))
-         (fibonacci (- n 2)))))
-
-(display "fib(30) = ")
-(display (fibonacci 30))
-(newline)
-```
+### Fibonacci Sequence
 ```bash
+cat > fibonacci.sc << 'EOF'
+(define (fib n)
+  (if (< n 2)
+      n
+      (+ (fib (- n 1)) (fib (- n 2)))))
+
+(display (fib 30))
+(newline)
+EOF
+
 ./compile-simple.sh fibonacci.sc
 time ./fibonacci  # See Stalin's optimization in action!
 ```
 
-## 🏁 Benchmarks
+## Benchmarks
 
-### **Performance Testing**
+The `benchmarks/` directory contains performance test programs:
+
 ```bash
-# Boyer theorem prover
+# Classic Lisp benchmarks
 ./compile-simple.sh benchmarks/boyer.sc
 time ./boyer
 
-# Quick sort
 ./compile-simple.sh benchmarks/quicksort.sc
 time ./quicksort
 
-# Conway's Game of Life
-./compile-simple.sh benchmarks/life.sc
-./life
-
-# Ray tracer
-./compile-simple.sh benchmarks/ray.sc
-./ray > output.ppm
+./compile-simple.sh benchmarks/matrix.sc
+time ./matrix
 ```
 
-### **Comparing with Interpreted Scheme**
+## Advanced Usage
+
+### Docker Development Environment
+
+For interactive development or debugging:
+
 ```bash
-# Compile with Stalin
-./compile-simple.sh benchmarks/boyer.sc
-time ./boyer
+# Build environment (one-time)
+./docker-build.sh
 
-# Compare with Chez Scheme (if installed)
-time chez --script benchmarks/boyer.sc
+# Interactive session
+docker run -it --rm -v $(pwd):/stalin stalin-dev /bin/bash
 
-# Stalin is typically 10-100x faster!
+# Inside container:
+./build-simple    # Build Stalin
+./stalin -help    # See options
 ```
 
-## 🛠️ Troubleshooting
+### Local Building
 
-### **Docker Issues**
+Build Stalin locally (expect warnings on ARM64):
+
 ```bash
-# Make sure Docker is running
-docker ps
+# Simple build (recommended)
+./build-simple
 
-# Build the x86_64 image if needed
-docker build --platform linux/amd64 -t stalin-x86_64 -f Dockerfile.x86_64 .
+# Full build with Boehm GC
+./build-modern
 ```
 
-### **Compilation Errors**
+Note: The locally built `./stalin` binary may not work properly on ARM64 due to struct layout differences. Use `./compile-simple.sh` for reliable compilation.
+
+## Scheme Language Support
+
+Stalin supports most R4RS Scheme features:
+
+### Supported
+- Numbers: integers, rationals, reals, complex
+- Lists and vectors
+- Functions and closures
+- Macros
+- I/O operations
+- String operations
+
+### Examples
+
+```scheme
+;; Numbers
+(+ 1 2 3)                    ; => 6
+(* 3.14159 2.0)              ; => 6.28318
+(exact->inexact 22/7)        ; => 3.142857142857143
+
+;; Lists
+(list 1 2 3)                 ; => (1 2 3)
+(append '(a b) '(c d))       ; => (a b c d)
+(map (lambda (x) (* x x)) '(1 2 3 4))  ; => (1 4 9 16)
+
+;; Strings
+(string-append "Hello" " " "World")  ; => "Hello World"
+(string-length "Stalin")             ; => 6
+
+;; Control flow
+(cond ((> 3 2) 'yes)
+      (else 'no))            ; => yes
+
+;; File I/O
+(with-output-to-file "output.txt"
+  (lambda () (display "Hello, file!")))
+```
+
+### Not Supported
+- Dynamic code loading (`eval`, `load`)
+- Interactive REPL features
+- Some newer Scheme standards (R5RS+)
+- Debugging information in binaries
+
+## Performance Tips
+
+1. **Use specific types** when possible - Stalin's optimizer works best with type information
+2. **Avoid `eval`** - Stalin is a whole-program compiler
+3. **Profile with `time`** - Stalin-compiled programs are typically very fast
+4. **Use benchmarks** - Compare performance with the included benchmark suite
+
+## Troubleshooting
+
+### Common Issues
+
+**Docker not running:**
 ```bash
-# Check if C code was generated
-ls -la *.c
-
-# Manual compilation with verbose output
-gcc -v -o program -I./include -O2 program.c -L./include -lm -lgc
+# Start Docker Desktop first, then:
+docker --version  # Should show version
 ```
 
-### **Runtime Issues**
+**Compilation fails:**
 ```bash
-# Check binary architecture
-file ./program
-
-# Run with debugging
-gdb ./program
+# Check syntax in a simple Scheme interpreter first
+# Make sure your .sc file contains valid Scheme
 ```
 
-## 📝 Stalin Language Features
-
-### **Supported Scheme**
-- R4RS Scheme (mostly)
-- Numeric tower (fixnums, flonums)
-- First-class procedures and closures
-- Tail recursion optimization
-- Aggressive whole-program optimization
-
-### **Key Optimizations**
-- **Type inference**: Eliminates boxing/unboxing
-- **Representation selection**: Uses native C types
-- **Dead code elimination**: Removes unused code
-- **Closure optimization**: Efficient closure compilation
-- **Lifetime analysis**: Reduces GC pressure
-
-### **Limitations**
-- No dynamic loading
-- No `eval` at runtime
-- Compilation can be slow for large programs
-- Limited debugging info in optimized code
-
-## 🎨 Advanced Usage
-
-### **Optimization Levels**
+**Binary doesn't run:**
 ```bash
-# Maximum optimization (default with -On)
-./compile-simple.sh program.sc
-
-# The script always uses -On for best performance
+# Check if compilation actually succeeded:
+ls -la your-program  # Should exist and be executable
+./your-program       # Should run
 ```
 
-### **Multiple Files**
+**Performance issues:**
 ```bash
-# Create main program
-echo '(load "utils.sc") (main)' > main.sc
+# Stalin is an optimizing compiler - use time to measure:
+time ./your-program
 
-# Compile (load statements are resolved at compile time)
-./compile-simple.sh main.sc
-./main
+# Compare with other Scheme implementations for reference
 ```
 
-### **Custom Build Flags**
-```bash
-# Edit compile-simple.sh to add custom GCC flags
-# For example, add -march=native for CPU-specific optimizations
-```
+### Getting Help
 
-## 🚀 What's Next?
+1. Check the [benchmarks/](benchmarks/) directory for working examples
+2. See [README.original](README.original) for historical Stalin documentation
+3. Review [LISPY_ROADMAP.md](LISPY_ROADMAP.md) for future development plans
 
-1. **Try the benchmarks** - See Stalin's incredible performance
-2. **Write your own programs** - Scheme with C-like speed
-3. **Contribute** - Help improve the ARM64 support
-4. **Explore optimization** - Profile your compiled programs
+## File Organization
 
-Stalin is one of the fastest Scheme compilers ever created. Enjoy the speed! 🏎️
+- `*.sc` - Scheme source files
+- `compile-simple.sh` - Main compilation script
+- `benchmarks/` - Performance test suite
+- `include/` - Runtime libraries
+- `stalin-*.c` - Generated C code for different architectures
+
+---
+
+Happy Scheme programming with Stalin! 🚀

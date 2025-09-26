@@ -1,144 +1,65 @@
-# Stalin → Lispy: A Modern Scheme Compiler
+# Stalin: A Modern Scheme Compiler
 
-**Stalin** is an aggressively optimizing Scheme compiler that produces highly efficient native code. This project aims to modernize Stalin for contemporary development environments and evolve it into **Lispy**, a next-generation Lisp development platform.
+**Stalin** is an aggressively optimizing Scheme compiler that produces highly efficient native code. This modernized version works seamlessly on ARM64/Apple Silicon through a hybrid Docker compilation pipeline.
 
 > 📜 **Original Documentation**: See [README.original](README.original) for the historical Stalin documentation by Jeffrey Mark Siskind.
 
 ## 🚀 Quick Start
 
-### Using Docker (Recommended)
+**Compile any Scheme program in one command:**
 
 ```bash
-# Start Docker Desktop first!
-
-# Build the development environment
-./docker-build.sh
-
-# Run interactive development
-docker run -it --rm -v $(pwd):/stalin stalin-dev /bin/bash
-
-# Run automated tests
-docker run --rm stalin-dev
+./compile-simple.sh your-program.sc
+./your-program
 ```
 
-### Local Development (macOS/Linux)
+### Examples
 
 ```bash
-# Build Stalin with modern fixes
-./build-modern
-
-# Or use the simplified build
-./build-simple
-
-# Test the compiler
-./stalin hello.sc
-./hello
-```
-
-### ARM64/Apple Silicon ✅ **COMPLETE**
-
-**Stalin now runs natively on ARM64/Apple Silicon!** Use the simple compilation script:
-
-```bash
-# Compile any Scheme program
+# Hello World
+echo '(display "Hello, World!")' > hello.sc
 ./compile-simple.sh hello.sc
 ./hello
 
-# Try more examples
-./compile-simple.sh benchmarks/factorial.sc
-./factorial
-
-# The script automatically:
-# 1. Uses Docker x86_64 emulation for code generation
-# 2. Compiles the generated C code natively on ARM64
-# 3. Creates optimized native binaries
+# Try benchmarks
+./compile-simple.sh benchmarks/boyer.sc
+time ./boyer
 ```
 
-**Alternative: Native Stalin Binary**
-```bash
-# Check version (works)
-./stalin-amd64 -version
+### How it Works
 
-# For compilation, use the Docker workflow above
-# (The native binary has runtime issues with compilation)
-```
+The compilation pipeline automatically:
+1. Uses Docker x86_64 emulation for Stalin's code generation (stable)
+2. Compiles the generated C code natively on your system (optimal)
+3. Creates optimized native binaries
 
-## 📋 Project Status
-
-### ✅ Phase 1: Modernization (Complete)
-- [x] Docker development environment
-- [x] Modern build scripts
-- [x] Initial compatibility fixes
-- [x] ARM64/Apple Silicon bootstrap
-- [x] Cross-platform compilation pipeline
-
-### ✅ Phase 2: Architecture Support (Complete)
-- [x] Native ARM64/Apple Silicon support
-- [x] Full 64-bit compatibility
-- [x] Docker x86_64 emulation pipeline
-- [x] Generate architecture-specific code
-- [ ] Windows WSL2 support (planned)
-
-### 🎯 Phase 3: Lispy Transformation (Future)
-- [ ] Modern Scheme standards (R7RS)
-- [ ] Interactive REPL
-- [ ] Package management system
-- [ ] IDE integration
-- [ ] Documentation generator
-
-## 🏗️ Architecture Support
-
-| Platform | Architecture | Status | Notes |
-|----------|-------------|---------|-------|
-| Linux | x86_64 | ✅ Working | Docker recommended |
-| macOS | Intel (x86_64) | ✅ Working | Native build works |
-| macOS | Apple Silicon (ARM64) | ✅ **COMPLETE** | Native Stalin + Docker pipeline |
-| Windows | WSL2 | 🔧 Testing | Use Docker |
-
-## 🛠️ Development
+## 🛠️ Development Setup
 
 ### Prerequisites
+- **Docker Desktop** (required for compilation)
+- **GCC/Clang** (for native compilation)
 
-- **Docker Desktop** (recommended) or
-- **Local tools**: GCC/Clang, Make, Python 3
-- **For graphics**: X11 development libraries
-
-### Project Structure
-
-```
-stalin/
-├── stalin.sc           # Compiler source (32K+ lines)
-├── stalin-*.c          # Pre-generated C code
-├── build-modern        # Modern build script
-├── Dockerfile          # Docker environment
-├── benchmarks/         # Test programs
-├── include/            # Runtime libraries
-└── docs/              # Documentation (coming)
-```
-
-### Building from Source
-
+### Setup
 ```bash
-# Extract Boehm GC
-tar -xzf gc6.8.tar.gz
+# Build Docker environment (one-time setup)
+./docker-build.sh
 
-# Build GC for ARM64 (if on Apple Silicon)
-./build-gc-arm64.sh
-
-# Build Stalin
-make -f makefile.modern
-
-# Run tests
-cd benchmarks
-./run-tests.sh  # Coming soon
+# Interactive development
+docker run -it --rm -v $(pwd):/stalin stalin-dev /bin/bash
 ```
 
-### Known Issues
+### Alternative: Local Build
+```bash
+# Build Stalin locally (warnings expected on ARM64)
+./build-simple
 
-1. **Docker daemon not running**: Start Docker Desktop first
-2. **Missing libgc.a**: Run `./build-gc-arm64.sh`
-3. **Build hangs**: Use `build-simple` instead of `build-modern`
-4. **Pointer warnings**: Expected on 64-bit systems (being fixed)
+# Or full build with Boehm GC
+./build-modern
+```
+
+## 📖 Usage
+
+See [USAGE.md](USAGE.md) for detailed examples and advanced usage.
 
 ## 🎓 About Stalin
 
@@ -151,150 +72,33 @@ Stalin is a whole-program optimizing Scheme compiler created by Jeffrey Mark Sis
 - **Closure optimization**: Efficient closure compilation
 
 ### Key Features
-
 - Produces standalone executables
 - No runtime interpreter needed
 - Extremely fast numeric code
 - Small binary size
 - R4RS Scheme (mostly) compatible
 
-### Limitations
+## 🏗️ Platform Support
 
-- No interactive REPL
-- No dynamic code loading
-- Compilation can be slow
-- Limited debugging support
-
-## 🚧 Roadmap to Lispy
-
-**Lispy** will evolve Stalin into a modern, developer-friendly Lisp platform:
-
-### Near Term (Q4 2025)
-- [x] Complete ARM64 native support ✅ **DONE**
-- [ ] CMake build system
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Comprehensive test suite
-- [ ] Windows WSL2 support
-
-### Medium Term (Q1 2026)
-- [ ] Basic REPL functionality
-- [ ] Module system
-- [ ] Package manager integration
-- [ ] VS Code extension
-
-### Long Term (2026+)
-- [ ] JIT compilation option
-- [ ] Incremental compilation
-- [ ] Advanced debugging tools
-- [ ] Web assembly target
-- [ ] GPU compute support
-
-## 📖 Documentation
-
-- [USAGE.md](USAGE.md) - **Complete usage guide and examples**
-- [VALIDATION_CHECKLIST.md](VALIDATION_CHECKLIST.md) - **✅ ARM64 validation checklist**
-- [DEVELOPMENT.md](DEVELOPMENT.md) - Development guide
-- [BOOTSTRAP.md](BOOTSTRAP.md) - ARM64 bootstrap process (completed)
-- [TESTING_STALIN.md](TESTING_STALIN.md) - Testing procedures
-- [VALIDATION_RESULTS.md](VALIDATION_RESULTS.md) - Build validation
-- [COMPILATION_TEST_RESULTS.md](COMPILATION_TEST_RESULTS.md) - ARM64 test results
-- [benchmarks/README](benchmarks/README) - Benchmark suite
+| Platform | Architecture | Status | Method |
+|----------|-------------|--------|---------|
+| macOS | Apple Silicon (ARM64) | ✅ Working | `compile-simple.sh` |
+| macOS | Intel (x86_64) | ✅ Working | `compile-simple.sh` |
+| Linux | x86_64 | ✅ Working | `compile-simple.sh` |
+| Windows | WSL2 | 🔧 Testing | Docker required |
 
 ## 🤝 Contributing
 
 We welcome contributions! Priority areas:
-
-1. **Platform expansion**: Help with Windows WSL2 support and other platforms
-2. **Build system**: CMake conversion
-3. **Testing**: Expand test coverage
-4. **Documentation**: Tutorials and examples
-5. **Modernization**: C99/C11 compliance
-
-### Development Process
-
-```bash
-# 1. Fork and clone
-git clone https://github.com/yourusername/stalin.git
-
-# 2. Create feature branch
-git checkout -b feature/amazing-feature
-
-# 3. Use Docker for consistent environment
-./docker-build.sh
-docker run -it --rm -v $(pwd):/stalin stalin-dev
-
-# 4. Make changes and test
-./build-modern
-./test-docker.sh
-
-# 5. Submit PR with description
-```
+1. **Platform expansion**: Windows WSL2 support
+2. **Testing**: Expand benchmark coverage
+3. **Documentation**: More examples and tutorials
+4. **Modernization**: R7RS Scheme compatibility
 
 ## 📜 License
 
 GNU General Public License v2 (inherited from original Stalin)
 
-## 🙏 Acknowledgments
-
-- **Jeffrey Mark Siskind** - Original Stalin author
-- **Contributors** - See README.original for historical contributors
-- **Modern Team** - Working on the Lispy transformation
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/lispylang/stalin/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/lispylang/stalin/discussions)
-- **Legacy**: Bug-Stalin@AI.MIT.EDU (historical, may not be active)
-
 ---
 
 > "Stalin: Finally, a Lisp compiler that does what it should..."
-> *Evolving into Lispy: A Lisp that developers actually want to use.*
-
-## 🚀 Quick Usage Guide
-
-### **Compile Scheme Programs**
-```bash
-# Simple compilation (recommended)
-./compile-simple.sh hello.sc
-./hello
-
-# Try factorial example
-echo '(define (factorial n)
-  (if (zero? n) 1 (* n (factorial (- n 1)))))
-(display (factorial 10))
-(newline)' > factorial.sc
-
-./compile-simple.sh factorial.sc
-./factorial  # Output: 3628800
-```
-
-### **Benchmarks**
-```bash
-# Run performance benchmarks
-./compile-simple.sh benchmarks/boyer.sc
-time ./boyer
-
-./compile-simple.sh benchmarks/quicksort.sc
-time ./quicksort
-```
-
-### **What the Script Does**
-1. **Generates C code** using Docker x86_64 emulation
-2. **Compiles natively** on your ARM64 system
-3. **Creates optimized binaries** with Stalin's aggressive optimizations
-
-## Quick Reference
-
-```scheme
-;; Hello World in Stalin/Lispy
-(display "Hello, World!")
-(newline)
-
-;; Compile and run
-;; $ ./compile-simple.sh hello.sc
-;; $ ./hello
-;; Hello, World!
-```
-
-For more examples, see the [benchmarks](benchmarks/) directory.
