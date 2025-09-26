@@ -227,17 +227,57 @@ if [ -f "stalin-${ARCH_NAME}.c" ]; then
     cp -f "stalin-${ARCH_NAME}.c" stalin.c
     SOURCE_SIZE=$(wc -l < "stalin-${ARCH_NAME}.c")
     echo "✓ Using stalin-${ARCH_NAME}.c ($SOURCE_SIZE lines of generated C code)"
+elif [ -f "stalin-IA32.c" ]; then
+    # Fallback to IA32 version
+    cp -f "stalin-IA32.c" stalin.c
+    SOURCE_SIZE=$(wc -l < "stalin-IA32.c")
+    echo "✓ Using stalin-IA32.c as fallback ($SOURCE_SIZE lines of generated C code)"
 else
-    echo "✗ ERROR: Could not find stalin-${ARCH_NAME}.c"
+    echo "⚠️  No Stalin C files found - attempting bootstrap generation..."
     echo ""
     echo "Available Stalin C files:"
     ls -la stalin-*.c 2>/dev/null || echo "  (no stalin-*.c files found)"
-    echo ""
-    echo "This means either:"
-    echo "  1. The Stalin source distribution is incomplete"
-    echo "  2. This architecture ($ARCH_NAME) is not supported"
-    echo "  3. The files were deleted during a previous build"
-    exit 1
+
+    # Try to generate the missing C files using our bootstrap script
+    if [ -x "./generate-stalin-c.sh" ]; then
+        echo ""
+        echo "🚀 Running bootstrap compilation to generate C files..."
+        if ./generate-stalin-c.sh; then
+            echo "✅ Bootstrap successful, retrying file selection..."
+            # Retry file selection after generation
+            if [ -f "stalin-${ARCH_NAME}.c" ]; then
+                cp -f "stalin-${ARCH_NAME}.c" stalin.c
+                SOURCE_SIZE=$(wc -l < "stalin-${ARCH_NAME}.c")
+                echo "✓ Using generated stalin-${ARCH_NAME}.c ($SOURCE_SIZE lines)"
+            elif [ -f "stalin-IA32.c" ]; then
+                cp -f "stalin-IA32.c" stalin.c
+                SOURCE_SIZE=$(wc -l < "stalin-IA32.c")
+                echo "✓ Using generated stalin-IA32.c ($SOURCE_SIZE lines)"
+            else
+                echo "❌ Bootstrap generation failed - no C files were created"
+                exit 1
+            fi
+        else
+            echo "❌ Bootstrap compilation failed"
+            echo ""
+            echo "This could be because:"
+            echo "  1. Docker image stalin-x86_64 is not available"
+            echo "  2. The Scheme source files in ./source/ are incomplete"
+            echo "  3. Network or permission issues"
+            exit 1
+        fi
+    else
+        echo "❌ Bootstrap script generate-stalin-c.sh not found or not executable"
+        echo ""
+        echo "Please run: chmod +x generate-stalin-c.sh"
+        echo ""
+        echo "Original error - no stalin-${ARCH_NAME}.c found:"
+        echo "This means either:"
+        echo "  1. The Stalin source distribution is incomplete"
+        echo "  2. This architecture ($ARCH_NAME) is not supported"
+        echo "  3. The files were deleted during a previous build"
+        exit 1
+    fi
 fi
 
 #
