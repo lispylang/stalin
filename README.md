@@ -9,7 +9,7 @@
 **Compile any Scheme program in one command:**
 
 ```bash
-./compile-simple.sh your-program.sc
+./compile your-program.sc
 ./your-program
 ```
 
@@ -18,11 +18,11 @@
 ```bash
 # Hello World
 echo '(display "Hello, World!")' > hello.sc
-./compile-simple.sh hello.sc
+./compile hello.sc
 ./hello
 
 # Try benchmarks
-./compile-simple.sh benchmarks/boyer.sc
+./compile benchmarks/boyer.sc
 time ./boyer
 ```
 
@@ -83,9 +83,9 @@ Stalin is a whole-program optimizing Scheme compiler created by Jeffrey Mark Sis
 ### Host Platforms (where Stalin runs)
 | Platform | Architecture | Status | Method |
 |----------|-------------|--------|---------|
-| macOS | Apple Silicon (ARM64) | ✅ Working | `compile-simple.sh` |
-| macOS | Intel (x86_64) | ✅ Working | `compile-simple.sh` |
-| Linux | x86_64 | ✅ Working | `compile-simple.sh` |
+| macOS | Apple Silicon (ARM64) | ✅ Working | `compile` |
+| macOS | Intel (x86_64) | ✅ Working | `compile` |
+| Linux | x86_64 | ✅ Working | `compile` |
 | Windows | WSL2 | 🔧 Testing | Docker required |
 
 ### Target Architectures (what Stalin compiles for)
@@ -93,12 +93,12 @@ Stalin can generate optimized C code for **13 different architectures**:
 
 | Architecture | Status | Usage Example |
 |--------------|--------|---------------|
-| **AMD64** (x86_64) | ✅ Tested | `./compile-simple.sh hello.sc AMD64` |
-| **IA32** (x86 32-bit) | ✅ Tested | `./compile-simple.sh hello.sc IA32` |
-| **ARM** (32-bit) | ✅ Tested | `./compile-simple.sh hello.sc ARM` |
-| **PowerPC/PowerPC64** | ✅ Tested | `./compile-simple.sh hello.sc PowerPC` |
-| **SPARC/SPARCv9/SPARC64** | ✅ Tested | `./compile-simple.sh hello.sc SPARC` |
-| **Alpha, MIPS, M68K, S390** | ✅ Tested | `./compile-simple.sh hello.sc Alpha` |
+| **AMD64** (x86_64) | ✅ Tested | `./compile hello.sc AMD64` |
+| **IA32** (x86 32-bit) | ✅ Tested | `./compile hello.sc IA32` |
+| **ARM** (32-bit) | ✅ Tested | `./compile hello.sc ARM` |
+| **PowerPC/PowerPC64** | ✅ Tested | `./compile hello.sc PowerPC` |
+| **SPARC/SPARCv9/SPARC64** | ✅ Tested | `./compile hello.sc SPARC` |
+| **Alpha, MIPS, M68K, S390** | ✅ Tested | `./compile hello.sc Alpha` |
 
 📋 **Full Details**: See [ARCHITECTURE_SUPPORT.md](ARCHITECTURE_SUPPORT.md) for comprehensive architecture testing results and cross-compilation guidance.
 

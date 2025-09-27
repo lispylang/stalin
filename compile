@@ -2,7 +2,7 @@
 # Simple Stalin compilation without volume mounts
 
 if [ $# -eq 0 ]; then
-    echo "Usage: ./compile-simple.sh <file.sc> [architecture]"
+    echo "Usage: ./compile <file.sc> [architecture]"
     echo ""
     echo "Available architectures:"
     echo "  IA32, IA32-align-double, AMD64, ARM, PowerPC, PowerPC64"

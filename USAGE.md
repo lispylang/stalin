@@ -5,7 +5,7 @@
 The simplest way to compile Scheme programs:
 
 ```bash
-./compile-simple.sh program.sc
+./compile program.sc
 ./program
 ```
 
@@ -14,7 +14,7 @@ The simplest way to compile Scheme programs:
 ### Hello World
 ```bash
 echo '(display "Hello, World!")' > hello.sc
-./compile-simple.sh hello.sc
+./compile hello.sc
 ./hello
 ```
 
@@ -30,7 +30,7 @@ cat > factorial.sc << 'EOF'
 (newline)
 EOF
 
-./compile-simple.sh factorial.sc
+./compile factorial.sc
 ./factorial
 # Output: 3628800
 ```
@@ -47,7 +47,7 @@ cat > fibonacci.sc << 'EOF'
 (newline)
 EOF
 
-./compile-simple.sh fibonacci.sc
+./compile fibonacci.sc
 time ./fibonacci  # See Stalin's optimization in action!
 ```
 
@@ -57,13 +57,13 @@ The `benchmarks/` directory contains performance test programs:
 
 ```bash
 # Classic Lisp benchmarks
-./compile-simple.sh benchmarks/boyer.sc
+./compile benchmarks/boyer.sc
 time ./boyer
 
-./compile-simple.sh benchmarks/quicksort.sc
+./compile benchmarks/quicksort.sc
 time ./quicksort
 
-./compile-simple.sh benchmarks/matrix.sc
+./compile benchmarks/matrix.sc
 time ./matrix
 ```
 
@@ -97,7 +97,7 @@ Build Stalin locally (expect warnings on ARM64):
 ./build-modern
 ```
 
-Note: The locally built `./stalin` binary may not work properly on ARM64 due to struct layout differences. Use `./compile-simple.sh` for reliable compilation.
+Note: The locally built `./stalin` binary may not work properly on ARM64 due to struct layout differences. Use `./compile` for reliable compilation.
 
 ## Scheme Language Support
 
@@ -190,7 +190,7 @@ time ./your-program
 ## File Organization
 
 - `*.sc` - Scheme source files
-- `compile-simple.sh` - Main compilation script
+- `compile` - Main compilation script
 - `benchmarks/` - Performance test suite
 - `include/` - Runtime libraries
 - `stalin-*.c` - Generated C code for different architectures

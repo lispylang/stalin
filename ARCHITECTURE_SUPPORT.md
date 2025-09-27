@@ -38,7 +38,7 @@ Stalin supports compilation for 12 different CPU architectures through its archi
 #### AMD64 (x86_64)
 - **Status**: ✅ Working - Primary development target
 - **Usage**: `./stalin -architecture AMD64 program.sc`
-- **Notes**: Used by default in `compile-simple.sh`, full Docker support
+- **Notes**: Used by default in `compile`, full Docker support
 
 #### IA32 (x86 32-bit)
 - **Status**: 🔧 Pending testing
@@ -157,7 +157,7 @@ These configurations are stored in `stalin.architectures` and define:
 ## References
 
 - Architecture definitions: `stalin.architectures`
-- Compilation scripts: `compile-simple.sh`, `test-architectures.sh`
+- Compilation scripts: `compile`, `test-architectures.sh`
 - Original documentation: `README.original`
 
 ---
