@@ -2,14 +2,33 @@
 # Simple Stalin compilation without volume mounts
 
 if [ $# -eq 0 ]; then
-    echo "Usage: ./compile-simple.sh <file.sc>"
+    echo "Usage: ./compile-simple.sh <file.sc> [architecture]"
+    echo ""
+    echo "Available architectures:"
+    echo "  IA32, IA32-align-double, AMD64, ARM, PowerPC, PowerPC64"
+    echo "  SPARC, SPARCv9, SPARC64, MIPS, Alpha, M68K, S390"
+    echo ""
+    echo "Default: AMD64"
     exit 1
 fi
 
 INPUT_FILE=$1
+ARCHITECTURE=${2:-AMD64}  # Default to AMD64 if no architecture specified
 BASE_NAME=$(basename "$INPUT_FILE" .sc)
 
-echo "🔧 Compiling $INPUT_FILE..."
+# Validate architecture
+VALID_ARCHITECTURES=(
+    "IA32" "IA32-align-double" "SPARC" "SPARCv9" "SPARC64"
+    "MIPS" "Alpha" "ARM" "M68K" "PowerPC" "S390" "PowerPC64" "AMD64"
+)
+
+if [[ ! " ${VALID_ARCHITECTURES[@]} " =~ " ${ARCHITECTURE} " ]]; then
+    echo "❌ Invalid architecture: $ARCHITECTURE"
+    echo "Valid architectures: ${VALID_ARCHITECTURES[*]}"
+    exit 1
+fi
+
+echo "🔧 Compiling $INPUT_FILE for $ARCHITECTURE architecture..."
 
 # Create container and copy file
 CONTAINER_ID=$(docker run --platform linux/amd64 -d stalin-x86_64 sleep 300)
@@ -19,7 +38,7 @@ docker cp "$INPUT_FILE" ${CONTAINER_ID}:/stalin/
 docker exec ${CONTAINER_ID} bash -c "
     cp include/stalin.architectures . 2>/dev/null
     PATH=.:\$PATH
-    ./stalin -On -c -architecture AMD64 $INPUT_FILE
+    ./stalin -On -c -architecture $ARCHITECTURE $INPUT_FILE
 "
 
 # Extract generated C code
@@ -30,14 +49,19 @@ docker rm -f ${CONTAINER_ID} > /dev/null
 
 # Compile if C code was generated
 if [ -f "${BASE_NAME}.c" ]; then
-    echo "📦 Building native ARM64 binary..."
-    gcc -o "$BASE_NAME" -I./include -O2 "${BASE_NAME}.c" -L./include -lm -lgc 2>/dev/null
+    echo "📦 Building native binary from $ARCHITECTURE-generated C code..."
 
-    if [ -f "$BASE_NAME" ]; then
-        echo "✅ Success! Run with: ./$BASE_NAME"
+    # Try to compile the generated C code
+    if gcc -o "$BASE_NAME" -I./include -O2 "${BASE_NAME}.c" -L./include -lm -lgc 2>/dev/null; then
+        echo "✅ Success! Generated C code compiled successfully."
+        echo "   Architecture: $ARCHITECTURE"
+        echo "   Run with: ./$BASE_NAME"
     else
-        echo "❌ Compilation failed"
+        echo "⚠️  C code generation succeeded but native compilation failed."
+        echo "   This may be normal for cross-architecture compilation."
+        echo "   Generated C file: ${BASE_NAME}.c"
+        echo "   Use appropriate cross-compiler for target architecture."
     fi
 else
-    echo "❌ Failed to generate C code"
+    echo "❌ Failed to generate C code for $ARCHITECTURE architecture"
 fi

@@ -1,0 +1,25 @@
+Stalin Architecture Test Results
+===============================
+Timestamp: 2025-09-27 14:02:40
+Test program: (display "Hello from Stalin architecture test!")
+
+IA32: PASSED - Generated valid C code
+IA32-align-double: PASSED - Generated valid C code
+SPARC: PASSED - Generated valid C code
+SPARCv9: PASSED - Generated valid C code
+SPARC64: PASSED - Generated valid C code
+MIPS: PASSED - Generated valid C code
+Alpha: PASSED - Generated valid C code
+ARM: PASSED - Generated valid C code
+M68K: PASSED - Generated valid C code
+PowerPC: PASSED - Generated valid C code
+S390: PASSED - Generated valid C code
+PowerPC64: PASSED - Generated valid C code
+AMD64: PASSED - Generated valid C code
+
+SUMMARY:
+========
+Passed:   13
+Warnings: 0
+Failed:   0
+Total:    13
