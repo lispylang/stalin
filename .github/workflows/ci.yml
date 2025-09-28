@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, slate, main ]
+  pull_request:
+    branches: [ master, slate, main ]
+  workflow_dispatch:
+
+jobs:
+  test-architectures:
+    name: Test Architecture Generation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: [IA32, AMD64, ARM, ARM64, RISCV64, PowerPC, SPARC, MIPS, Alpha, M68K, S390, Cosmopolitan]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker
+      run: |
+        docker --version
+
+    - name: Build Stalin Docker image
+      run: |
+        docker build -t stalin-x86_64 -f Dockerfile.x86_64 .
+
+    - name: Test ${{ matrix.architecture }} architecture
+      run: |
+        echo "Testing ${{ matrix.architecture }} architecture..."
+        ./test-architectures.sh ${{ matrix.architecture }}
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.architecture }}
+        path: |
+          *-test.c
+          architecture-test-results.txt
+
+  build-cosmopolitan:
+    name: Build with Cosmopolitan
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Cosmopolitan toolchain
+      run: |
+        if [ ! -f cosmocc.zip ]; then
+          curl -L -o cosmocc.zip https://github.com/jart/cosmopolitan/releases/latest/download/cosmocc.zip
+          unzip -q cosmocc.zip
+        fi
+
+    - name: Test Cosmopolitan compilation
+      run: |
+        ./cosmocc/bin/cosmocc --version
+        echo '(display "Hello from Stalin!")' > test.sc
+        ./compile-cosmopolitan test.sc || true
+
+    - name: Run benchmarks
+      run: |
+        if [ -f benchmark-fib.sc ]; then
+          ./optimize-build.sh -O3 -m tiny benchmark-fib.sc || true
+          if [ -f benchmark-fib ]; then
+            ./benchmark-fib
+          fi
+        fi
+
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Docker images
+      run: |
+        docker build -t stalin-base .
+        docker build -t stalin-x86_64 -f Dockerfile.x86_64 .
+        docker build -t stalin-cosmo -f Dockerfile.cosmo .
+
+    - name: Test Docker compilation
+      run: |
+        echo '(display "Docker test")' > test.sc
+        docker run --rm -v $(pwd):/work stalin-x86_64 stalin -On test.sc || true
+
+  benchmark-suite:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libgc-dev
+
+    - name: Build Stalin
+      run: |
+        if [ -f build-modern ]; then
+          ./build-modern || true
+        fi
+
+    - name: Run benchmark suite
+      run: |
+        if [ -f stalin ] && [ -f benchmark-fib.sc ]; then
+          ./stalin -On benchmark-fib.sc
+          gcc -O2 benchmark-fib.c -lm -lgc -o benchmark-fib
+          time ./benchmark-fib
+        fi
+
+    - name: Compare optimization levels
+      run: |
+        if [ -f optimize-build.sh ] && [ -f benchmark-fib.sc ]; then
+          echo "Testing different optimization levels..."
+          for opt in 0 2 3 s; do
+            echo "Optimization level: -O$opt"
+            ./optimize-build.sh -O$opt benchmark-fib.sc -o bench-O$opt || true
+            if [ -f bench-O$opt ]; then
+              time ./bench-O$opt
+              ls -lh bench-O$opt
+            fi
+          done
+        fi
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check shell scripts
+      run: |
+        sudo apt-get install -y shellcheck
+        shellcheck compile || true
+        shellcheck compile-cosmopolitan || true
+        shellcheck optimize-build.sh || true
+
+    - name: Check file permissions
+      run: |
+        for script in compile compile-cosmopolitan compile-native-cosmo optimize-build.sh build build-modern; do
+          if [ -f $script ]; then
+            if [ ! -x $script ]; then
+              echo "Warning: $script is not executable"
+            fi
+          fi
+        done

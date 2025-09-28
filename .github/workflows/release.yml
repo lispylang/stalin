@@ -1,0 +1,148 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        type: string
+
+jobs:
+  build-release:
+    name: Build Release Binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+          - os: macos-latest
+            platform: darwin
+            arch: universal
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup build environment
+      run: |
+        if [ "${{ matrix.platform }}" = "linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y build-essential libgc-dev
+        else
+          brew install libgc || true
+        fi
+
+    - name: Download Cosmopolitan toolchain
+      run: |
+        curl -L -o cosmocc.zip https://github.com/jart/cosmopolitan/releases/latest/download/cosmocc.zip
+        unzip -q cosmocc.zip
+
+    - name: Build Stalin with Cosmopolitan
+      run: |
+        # Build Stalin itself as a universal binary
+        if [ -f stalin.c ]; then
+          ./cosmocc/bin/cosmocc -O2 -o stalin-universal stalin.c -I./include -L./include -lm -lgc
+        fi
+
+    - name: Build optimized binaries
+      run: |
+        # Build different variants
+        for mode in standard tiny optlinux; do
+          if [ "$mode" = "optlinux" ] && [ "${{ matrix.platform }}" != "linux" ]; then
+            continue
+          fi
+
+          if [ -f stalin.c ]; then
+            ./optimize-build.sh -O3 -m $mode -s -o stalin-$mode.c || true
+          fi
+        done
+
+    - name: Create release archive
+      run: |
+        VERSION="${{ github.event.inputs.version || github.ref_name }}"
+        ARCHIVE_NAME="stalin-${VERSION}-${{ matrix.platform }}-${{ matrix.arch }}"
+
+        mkdir -p release/$ARCHIVE_NAME
+        cp -r include release/$ARCHIVE_NAME/
+        cp compile* release/$ARCHIVE_NAME/ || true
+        cp optimize-build.sh release/$ARCHIVE_NAME/ || true
+        cp stalin* release/$ARCHIVE_NAME/ || true
+        cp README.md release/$ARCHIVE_NAME/ || true
+        cp benchmarks.sc benchmark-fib.sc release/$ARCHIVE_NAME/ || true
+
+        cd release
+        tar czf $ARCHIVE_NAME.tar.gz $ARCHIVE_NAME
+        cd ..
+
+        echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+        echo "ARCHIVE_PATH=release/$ARCHIVE_NAME.tar.gz" >> $GITHUB_ENV
+
+    - name: Upload release artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.ARCHIVE_NAME }}
+        path: ${{ env.ARCHIVE_PATH }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Create Release Notes
+      run: |
+        cat > release_notes.md << 'EOF'
+        # Stalin Scheme Compiler Release
+
+        ## Features
+        - Support for 15 architectures including ARM64 and RISC-V
+        - Cosmopolitan Libc integration for universal binaries
+        - Optimized build modes (standard, tiny, debug, optlinux)
+        - Performance benchmarks suite
+
+        ## Architectures Supported
+        - x86: IA32, IA32-align-double, AMD64
+        - ARM: ARM (32-bit), ARM64 (64-bit)
+        - RISC-V: RISCV64
+        - PowerPC: PowerPC, PowerPC64
+        - SPARC: SPARC, SPARCv9, SPARC64
+        - Others: MIPS, Alpha, M68K, S390
+        - Universal: Cosmopolitan (runs on Linux/Mac/Windows/BSDs)
+
+        ## What's New
+        - ARM64 architecture support for Apple Silicon and modern ARM
+        - RISC-V 64-bit architecture support
+        - Advanced optimization build script
+        - Comprehensive performance benchmarks
+
+        ## Installation
+        1. Download the appropriate archive for your platform
+        2. Extract: `tar xzf stalin-*.tar.gz`
+        3. Run: `./compile <your-program.sc>`
+
+        For universal binaries: `./compile-cosmopolitan <your-program.sc>`
+        EOF
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: release_notes.md
+        files: artifacts/**/*.tar.gz
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

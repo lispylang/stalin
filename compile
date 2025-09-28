@@ -5,7 +5,7 @@ if [ $# -eq 0 ]; then
     echo "Usage: ./compile <file.sc> [architecture]"
     echo ""
     echo "Available architectures:"
-    echo "  IA32, IA32-align-double, AMD64, ARM, ARM64, RISCV64, PowerPC, PowerPC64"
+    echo "  IA32, IA32-align-double, AMD64, ARM, ARM64, RISCV64, WASM32, PowerPC, PowerPC64"
     echo "  SPARC, SPARCv9, SPARC64, MIPS, Alpha, M68K, S390, Cosmopolitan"
     echo ""
     echo "Default: AMD64"
@@ -19,7 +19,7 @@ BASE_NAME=$(basename "$INPUT_FILE" .sc)
 # Validate architecture
 VALID_ARCHITECTURES=(
     "IA32" "IA32-align-double" "SPARC" "SPARCv9" "SPARC64"
-    "MIPS" "Alpha" "ARM" "ARM64" "RISCV64" "M68K" "PowerPC" "S390" "PowerPC64" "AMD64" "Cosmopolitan"
+    "MIPS" "Alpha" "ARM" "ARM64" "RISCV64" "WASM32" "M68K" "PowerPC" "S390" "PowerPC64" "AMD64" "Cosmopolitan"
 )
 
 if [[ ! " ${VALID_ARCHITECTURES[@]} " =~ " ${ARCHITECTURE} " ]]; then
