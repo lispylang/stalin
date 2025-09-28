@@ -1,0 +1,85 @@
+#!/bin/bash
+# Native Cosmopolitan-based Stalin compilation - NO Docker dependency
+
+if [ $# -eq 0 ]; then
+    echo "Usage: ./compile-cosmopolitan <file.sc>"
+    echo ""
+    echo "Compiles Scheme programs using Stalin with Cosmopolitan Libc"
+    echo "Creates universal binaries that run on Linux, Mac, Windows, FreeBSD, OpenBSD, NetBSD"
+    exit 1
+fi
+
+INPUT_FILE=$1
+BASE_NAME=$(basename "$INPUT_FILE" .sc)
+
+# Check if cosmocc is available
+if ! command -v cosmocc &> /dev/null; then
+    echo "❌ cosmocc not found. Please install Cosmopolitan toolchain:"
+    echo "   wget https://cosmo.zip/pub/cosmocc/cosmocc.zip"
+    echo "   unzip cosmocc.zip"
+    echo "   export PATH=\$PWD/cosmocc/bin:\$PATH"
+    exit 1
+fi
+
+echo "🔧 Compiling $INPUT_FILE with native Cosmopolitan Stalin..."
+
+# Check if we have Stalin binary, use pre-compiled if needed
+if [ ! -f "./stalin" ]; then
+    echo "📝 Setting up Stalin compiler..."
+
+    # Use pre-compiled Stalin binary if available
+    if [ -f "stalin-amd64" ]; then
+        echo "Using pre-compiled Stalin binary (stalin-amd64)"
+        cp stalin-amd64 stalin
+    else
+        echo "❌ No Stalin binary found. Please ensure you have stalin or stalin-amd64."
+        exit 1
+    fi
+fi
+
+# Generate C code using native Stalin with Cosmopolitan architecture
+echo "📝 Generating C code with Cosmopolitan target..."
+cp include/stalin.architectures . 2>/dev/null
+PATH=./include:$PATH ./stalin -On -c -architecture Cosmopolitan "$INPUT_FILE"
+
+# Check if C code was generated
+if [ ! -f "${BASE_NAME}.c" ]; then
+    echo "❌ Failed to generate C code for Cosmopolitan architecture"
+    exit 1
+fi
+
+echo "📦 Building universal binary with cosmocc..."
+
+# Compile with Cosmopolitan toolchain in a clean environment
+# Create a temporary directory to avoid header conflicts
+TEMP_DIR=$(mktemp -d)
+cp "${BASE_NAME}.c" "$TEMP_DIR/"
+cd "$TEMP_DIR"
+
+if cosmocc -o "$BASE_NAME" -O2 "${BASE_NAME}.c" -lm 2>/dev/null; then
+    # Move the binary back to the original directory
+    mv "$BASE_NAME" "$OLDPWD/"
+    cd "$OLDPWD"
+    rm -rf "$TEMP_DIR"
+
+    echo "✅ Success! Universal binary created: $BASE_NAME"
+    echo "   This binary runs on Linux, Mac, Windows, FreeBSD, OpenBSD, NetBSD"
+    echo "   Run with: ./$BASE_NAME"
+
+    # Display binary info
+    if command -v file &> /dev/null; then
+        echo ""
+        echo "Binary info:"
+        file "./$BASE_NAME"
+    fi
+else
+    cd "$OLDPWD"
+    cp "$TEMP_DIR/${BASE_NAME}.c" ./ 2>/dev/null
+    rm -rf "$TEMP_DIR"
+
+    echo "❌ Cosmopolitan compilation failed"
+    echo "   Generated C file: ${BASE_NAME}.c"
+    echo "   Check cosmocc installation and try manually:"
+    echo "   cosmocc -o $BASE_NAME -O2 ${BASE_NAME}.c -lm"
+    exit 1
+fi

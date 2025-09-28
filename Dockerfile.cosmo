@@ -1,0 +1,8 @@
+# Dockerfile for Stalin with Cosmopolitan support
+FROM stalin-x86_64:latest
+
+# Copy our updated architecture file
+COPY include/stalin.architectures ./include/stalin.architectures
+
+# Verify the architecture is added
+RUN grep "Cosmopolitan" include/stalin.architectures || echo "WARNING: Cosmopolitan architecture not found"

@@ -6,7 +6,7 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "Available architectures:"
     echo "  IA32, IA32-align-double, AMD64, ARM, PowerPC, PowerPC64"
-    echo "  SPARC, SPARCv9, SPARC64, MIPS, Alpha, M68K, S390"
+    echo "  SPARC, SPARCv9, SPARC64, MIPS, Alpha, M68K, S390, Cosmopolitan"
     echo ""
     echo "Default: AMD64"
     exit 1
@@ -19,13 +19,19 @@ BASE_NAME=$(basename "$INPUT_FILE" .sc)
 # Validate architecture
 VALID_ARCHITECTURES=(
     "IA32" "IA32-align-double" "SPARC" "SPARCv9" "SPARC64"
-    "MIPS" "Alpha" "ARM" "M68K" "PowerPC" "S390" "PowerPC64" "AMD64"
+    "MIPS" "Alpha" "ARM" "M68K" "PowerPC" "S390" "PowerPC64" "AMD64" "Cosmopolitan"
 )
 
 if [[ ! " ${VALID_ARCHITECTURES[@]} " =~ " ${ARCHITECTURE} " ]]; then
     echo "❌ Invalid architecture: $ARCHITECTURE"
     echo "Valid architectures: ${VALID_ARCHITECTURES[*]}"
     exit 1
+fi
+
+# Handle Cosmopolitan architecture differently
+if [ "$ARCHITECTURE" = "Cosmopolitan" ]; then
+    echo "🌍 Using Cosmopolitan universal binary compilation..."
+    exec ./compile-cosmopolitan "$INPUT_FILE"
 fi
 
 echo "🔧 Compiling $INPUT_FILE for $ARCHITECTURE architecture..."

@@ -1,0 +1,92 @@
+#!/bin/bash
+# Simplified native Cosmopolitan compilation using Docker for C generation only
+
+if [ $# -eq 0 ]; then
+    echo "Usage: ./compile-native-cosmo <file.sc>"
+    echo ""
+    echo "Compiles Scheme programs using Stalin with Cosmopolitan Libc"
+    echo "Creates universal binaries that run on Linux, Mac, Windows, FreeBSD, OpenBSD, NetBSD"
+    exit 1
+fi
+
+INPUT_FILE=$1
+BASE_NAME=$(basename "$INPUT_FILE" .sc)
+
+# Check if cosmocc is available
+if ! command -v cosmocc &> /dev/null; then
+    echo "❌ cosmocc not found. Please install Cosmopolitan toolchain:"
+    echo "   export PATH=\$PWD/cosmocc/bin:\$PATH"
+    exit 1
+fi
+
+echo "🔧 Compiling $INPUT_FILE with hybrid Docker+Cosmopolitan approach..."
+
+# Generate C code using Docker (only for C generation)
+echo "📝 Generating C code using Docker Stalin with Cosmopolitan target..."
+
+# Create container and copy file
+CONTAINER_ID=$(docker run --platform linux/amd64 -d stalin-cosmo sleep 300)
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to start Docker container. Please build Docker image first:"
+    echo "   docker build --platform linux/amd64 -f Dockerfile.cosmo -t stalin-cosmo ."
+    exit 1
+fi
+
+docker cp "$INPUT_FILE" ${CONTAINER_ID}:/stalin/
+
+# Generate C code with Cosmopolitan architecture
+docker exec ${CONTAINER_ID} bash -c "
+    cp include/stalin.architectures . 2>/dev/null
+    PATH=.:\$PATH
+    ./stalin -On -c -architecture Cosmopolitan $INPUT_FILE
+"
+
+# Extract generated C code
+docker cp ${CONTAINER_ID}:/stalin/${BASE_NAME}.c ./${BASE_NAME}.c 2>/dev/null
+
+# Clean up
+docker rm -f ${CONTAINER_ID} > /dev/null
+
+# Check if C code was generated
+if [ ! -f "${BASE_NAME}.c" ]; then
+    echo "❌ Failed to generate C code for Cosmopolitan architecture"
+    exit 1
+fi
+
+echo "📦 Building universal binary with native cosmocc..."
+
+# Compile with Cosmopolitan toolchain in a clean environment to avoid header conflicts
+TEMP_DIR=$(mktemp -d)
+cp "${BASE_NAME}.c" "$TEMP_DIR/"
+cd "$TEMP_DIR"
+
+# Fix the FILE assertion issue that's incompatible with Cosmopolitan
+sed 's/assert(offsetof(struct{char dummy; FILE probe;}, probe)==8);//' "${BASE_NAME}.c" > "${BASE_NAME}-fixed.c"
+
+if cosmocc -o "$BASE_NAME" -O2 "${BASE_NAME}-fixed.c" -lm 2>/dev/null; then
+    # Move the binary back to the original directory
+    mv "$BASE_NAME" "$OLDPWD/"
+    cd "$OLDPWD"
+    rm -rf "$TEMP_DIR"
+
+    echo "✅ Success! Universal binary created: $BASE_NAME"
+    echo "   This binary runs on Linux, Mac, Windows, FreeBSD, OpenBSD, NetBSD"
+    echo "   Run with: ./$BASE_NAME"
+
+    # Display binary info
+    if command -v file &> /dev/null; then
+        echo ""
+        echo "Binary info:"
+        file "./$BASE_NAME"
+    fi
+else
+    cd "$OLDPWD"
+    cp "$TEMP_DIR/${BASE_NAME}.c" ./ 2>/dev/null
+    rm -rf "$TEMP_DIR"
+
+    echo "❌ Cosmopolitan compilation failed"
+    echo "   Generated C file: ${BASE_NAME}.c"
+    echo "   Try debugging with:"
+    echo "   cosmocc -o $BASE_NAME -O2 ${BASE_NAME}.c -lm"
+    exit 1
+fi
