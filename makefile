@@ -1,4 +1,6 @@
 CC = gcc
+AR = ar
+RANLIB = ranlib
 
 OPTIONS = -d1 -d5 -d6 -On -t -c -db\
           -clone-size-limit 4 -split-even-if-no-widening\
@@ -7,15 +9,12 @@ OPTIONS = -d1 -d5 -d6 -On -t -c -db\
           -do-not-index-constant-structure-types-by-expression\
           -do-not-index-allocated-structure-types-by-expression
 
-# Stalin can be compiled with -freg-struct-return on most platforms. But gcc
-# and egcs have a bug on Linux/Alpha that causes them to crash when given
-# -freg-struct-return. ARCH_OPTS is set up apprpriately by ./build to handle
-# this.
-
+# Universal binary compilation with Cosmopolitan
 stalin: stalin.c
-	$(CC) -o stalin -I./include -O3 -fomit-frame-pointer\
-              -fno-strict-aliasing ${ARCH_OPTS}\
-	      stalin.c -L./include -lm -lgc
+	$(CC) -o stalin-cosmo -I./include -O3 -fomit-frame-pointer\
+              -fno-strict-aliasing -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast ${ARCH_OPTS}\
+	      stalin.c -L./include -lm -lgc -lstalin
+	ln -sf stalin-cosmo stalin
 	./post-make
 
 stalin-architecture: stalin-architecture.c

@@ -1,0 +1,70 @@
+#!/bin/bash
+# Manual Scheme Compiler
+# Since Stalin binaries aren't working, this script helps create simple Scheme programs
+# and compile them through the C→APE pipeline
+
+set -e
+
+SCHEME_FILE="${1}"
+OUTPUT_NAME="${2:-${SCHEME_FILE%.*}}"
+
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 <scheme_file> [output_name]"
+    echo ""
+    echo "This script compiles Scheme programs to universal binaries."
+    echo "Currently requires pre-generated C files since Stalin runtime has issues."
+    echo ""
+    echo "Examples:"
+    echo "  $0 hello.sc hello"
+    echo "  $0 test.sc"
+    exit 1
+fi
+
+if [ ! -f "$SCHEME_FILE" ]; then
+    echo "Error: Scheme file '$SCHEME_FILE' not found"
+    exit 1
+fi
+
+C_FILE="${SCHEME_FILE%.*}.c"
+
+# Check if C file already exists
+if [ ! -f "$C_FILE" ]; then
+    echo "Error: No C file found at $C_FILE"
+    echo ""
+    echo "The Stalin Scheme→C compiler is currently not working."
+    echo "You need to either:"
+    echo "  1. Generate the C file using a working Stalin installation"
+    echo "  2. Use an existing C file from a previous compilation"
+    echo ""
+    echo "For simple programs, you can manually create a C wrapper."
+    exit 1
+fi
+
+echo "Compiling $C_FILE → $OUTPUT_NAME (universal binary)..."
+
+# Compile with Cosmopolitan
+if ! ./cosmocc/bin/cosmocc -o "$OUTPUT_NAME" "$C_FILE" \
+    -I./include -L./include -lm -lgc -lstalin \
+    -O3 -fomit-frame-pointer -fno-strict-aliasing 2>&1; then
+    echo "Error: Compilation failed"
+    exit 1
+fi
+
+echo "✓ Successfully compiled: $OUTPUT_NAME"
+echo "  Size: $(ls -lh "$OUTPUT_NAME" | awk '{print $5}')"
+echo "  Type: $(file "$OUTPUT_NAME" | cut -d: -f2-)"
+
+# Try with -mtiny for smaller binary
+echo ""
+echo "Creating size-optimized version: ${OUTPUT_NAME}-tiny..."
+if ./cosmocc/bin/cosmocc -o "${OUTPUT_NAME}-tiny" "$C_FILE" \
+    -I./include -L./include -lm -lgc -lstalin \
+    -Os -mtiny -fomit-frame-pointer -fno-strict-aliasing 2>&1; then
+    echo "✓ Size-optimized binary: ${OUTPUT_NAME}-tiny"
+    echo "  Size: $(ls -lh "${OUTPUT_NAME}-tiny" | awk '{print $5}')"
+else
+    echo "⚠ Size optimization failed (not critical)"
+fi
+
+echo ""
+echo "Binary ready to run: ./$OUTPUT_NAME"

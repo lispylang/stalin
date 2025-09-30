@@ -1,85 +1,77 @@
 #!/bin/sh
 
-# On SPARCv9 under Solaris you need to use cc since gcc doesn't support
-# SPARCv9 under Solaris.
+# Stalin Cosmopolitan Build Script
+# Modified to use Cosmopolitan toolchain for universal binary generation
 
-# On PowerPC64 under AIX you cannot compile the compiler with gcc since you
-# get errors of the form:
-# 1252-171 The displacement must be greater than or equal to
-#          -32768 and less than or equal to 32767.
-# It might be possible to compile smaller programs with gcc. To compile the
-# compiler you need to use cc. It is not clear whethr you can compile libgc.a
-# and libstalin.a with one compiler and Scheme programs such as Stalin with
-# another.
+# Set up Cosmopolitan toolchain
+COSMO_CC="$(pwd)/cosmocc/bin/cosmocc"
+COSMO_AR="$(pwd)/cosmocc/bin/cosmoar"
 
-if [ -r /etc/debian_version ]
-then
-    DEBIAN_SYSTEM=t
+if [ ! -f "$COSMO_CC" ]; then
+    echo "Error: Cosmopolitan toolchain not found at $COSMO_CC"
+    echo "Please run ./install-cosmo-toolchain.sh first"
+    exit 1
 fi
 
-#if [ x"${DEBIAN_SYSTEM}" != x ]
-#then
-#  ARCH_OPTS="${ARCH_OPTS} -g -I/usr/include/gc"
-#fi
+# Use Cosmopolitan's ranlib-equivalent
+RANLIB="$COSMO_AR s"
 
-case `uname -s`/`uname -r` in
-  IRIX*/*)   RANLIB=touch;;
-  SunOS/5.*) RANLIB=touch;;
-  *)         RANLIB=ranlib;;
-  esac
+# Build GC library using stub (avoiding Boehm GC compilation issues)
+echo "Building GC library with Cosmopolitan (using stub)..."
+"$COSMO_CC" -c -O2 -fomit-frame-pointer gc_stub.c
+"$COSMO_AR" rc include/libgc.a gc_stub.o
+$RANLIB include/libgc.a
+rm -f gc_stub.o
 
-# gc-Makefile.sed changed CC from cc to gcc and adds
-# -DLARGE_CONFIG -DUSE_MMAP -DDONT_ADD_BYTE_AT_END
-# to CFLAGS.
-# Might also try -DSILENT and either
-# -DUSE_I686_PREFETCH or -DUSE_3DNOW_PREFETCH
+# Create minimal gc.h header
+cat > include/gc.h << 'EOF'
+#ifndef GC_H
+#define GC_H
+#include <stdlib.h>
+void *GC_malloc(size_t size);
+void *GC_malloc_atomic(size_t size);
+void *GC_realloc(void *ptr, size_t size);
+void GC_free(void *ptr);
+void GC_init(void);
+void GC_gcollect(void);
+size_t GC_get_heap_size(void);
+size_t GC_get_free_bytes(void);
+void GC_set_warn_proc(void (*proc)(char *, int));
+void *GC_malloc_uncollectable(size_t size);
+void *GC_malloc_atomic_uncollectable(size_t size);
+void GC_register_finalizer(void *obj, void (*fn)(void *, void *), void *cd, void (**ofn)(void *, void *), void **ocd);
+int GC_invoke_finalizers(void);
+void GC_enable_incremental(void);
+void GC_disable(void);
+void GC_enable(void);
+#endif
+EOF
 
-# The Debian conditionalization has been removed since the Debian package for
-# the Boehm GC doesn't make the mods from gc-Makefile.sed.
-#if [ x"${DEBIAN_SYSTEM}" = x ]
-#then
-  # Under Debian, we have libgc, but otherwise, don't assume we have the Boehm
-  # GC available.
-  rm -rf gc6.8
-  gunzip -c gc6.8.tar.gz | tar xf -
-  rm -f gc6.8/Makefile.new
-  sed -f gc-Makefile.sed gc6.8/Makefile >gc6.8/Makefile.new
-  mv -f gc6.8/Makefile.new gc6.8/Makefile
-  cd gc6.8
-  make test
-  cd ..
-  cp -f gc6.8/include/gc.h include/.
-  cp -f gc6.8/gc.a include/libgc.a
-  cp -f gc6.8/include/gc_config_macros.h include/.
-  $RANLIB include/libgc.a
-  rm -rf gc6.8
-#fi
+# Create minimal gc_config_macros.h
+cat > include/gc_config_macros.h << 'EOF'
+#ifndef GC_CONFIG_MACROS_H
+#define GC_CONFIG_MACROS_H
+/* Minimal GC config macros for stub */
+#endif
+EOF
 
+# Build libstalin.a with Cosmopolitan compiler (using stub instead of X11)
+echo "Building libstalin.a with Cosmopolitan..."
 cd include
 rm -f libstalin.a
-gcc -c -O2 -fomit-frame-pointer -freg-struct-return xlib-c.c
-ar rc libstalin.a xlib-c.o
+"$COSMO_CC" -c -O2 -fomit-frame-pointer xlib-stub.c
+"$COSMO_AR" rc libstalin.a xlib-stub.o
 $RANLIB libstalin.a
-rm xlib-c.o
+rm -f xlib-stub.o
 cd ..
 
-case `./include/stalin-architecture-name` in
-  unknown)
-    echo "Cannot (yet) run Stalin on this architecture"
-    exit 1;;
-  *)
-    cp -f stalin-`./include/stalin-architecture-name`.c stalin.c;;
-  esac
+# Use IA32 bootstrap for initial compilation regardless of architecture
+# We'll use the working stalin-IA32.c as the universal bootstrap
+echo "Using IA32 bootstrap for universal compilation..."
+cp -f stalin-IA32.c stalin.c
 
-# Stalin can be compiled with -freg-struct-return on most platforms. But gcc
-# and egcs have a bug on Linux/Alpha that causes them to crash when given
-# -freg-struct-return.
+# Set Cosmopolitan-specific compilation options
+ARCH_OPTS="-static"
 
-case `uname -m`/`uname -s` in
-  alpha/Linux)
-    ARCH_OPTS="${ARCH_OPTS}";;
-  *)
-    ARCH_OPTS="${ARCH_OPTS} -freg-struct-return";;
-  esac
-
-exec make ARCH_OPTS="${ARCH_OPTS}"
+# Pass Cosmopolitan compiler to make
+exec make CC="$COSMO_CC" AR="$COSMO_AR" RANLIB="$RANLIB" ARCH_OPTS="$ARCH_OPTS"

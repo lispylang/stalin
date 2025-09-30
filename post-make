@@ -1,5 +1,6 @@
 #!/bin/sh
 lib=`pwd`/include
-mv stalin $lib
-(echo "#!/bin/sh"; echo "exec $lib/stalin -I $lib -copt -fno-strict-aliasing "'$@') >stalin
-chmod a+x stalin
+mv stalin-cosmo $lib
+(echo "#!/bin/sh"; echo "exec $lib/stalin-cosmo -I $lib -copt -fno-strict-aliasing "'$@') >stalin-cosmo
+chmod a+x stalin-cosmo
+ln -sf stalin-cosmo stalin

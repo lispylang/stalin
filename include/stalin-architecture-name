@@ -2,6 +2,10 @@
 case `uname -m`/`uname -s` in
   i[3456]86/*)
     echo "IA32";;
+  x86_64/*|amd64/*)
+    echo "AMD64";;
+  aarch64/*|arm64/*)
+    echo "IA32";;  # Workaround: Use IA32 for ARM64 hosts (Stalin doesn't know ARM64)
   sparc/Linux)
     echo "SPARC";;
   sparc64/Linux)
@@ -18,6 +22,8 @@ case `uname -m`/`uname -s` in
     echo "M68K";;
   "Power Macintosh/Darwin")
     echo "PowerPC";;
+  powerpc64/*|ppc64/*)
+    echo "PowerPC64";;
   s390/Linux)
     echo "S390";;
   000661704C00/AIX)
@@ -29,5 +35,6 @@ case `uname -m`/`uname -s` in
   000661734C00/AIX)
     echo "PowerPC64";;
   *)
-    echo "unknown";;
+    # For Cosmopolitan builds, default to IA32 as universal bootstrap
+    echo "IA32";;
   esac

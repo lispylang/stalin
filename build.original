@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Stalin Cosmopolitan Build Script
+# Modified to use Cosmopolitan toolchain for universal binary generation
+
+# Set up Cosmopolitan toolchain
+COSMO_CC="$(pwd)/cosmocc/bin/cosmocc"
+COSMO_AR="$(pwd)/cosmocc/bin/cosmoar"
+
+if [ ! -f "$COSMO_CC" ]; then
+    echo "Error: Cosmopolitan toolchain not found at $COSMO_CC"
+    echo "Please run ./install-cosmo-toolchain.sh first"
+    exit 1
+fi
+
+# Use Cosmopolitan's ranlib-equivalent
+RANLIB="$COSMO_AR s"
+
+# Build Boehm GC with Cosmopolitan compiler
+echo "Building Boehm GC with Cosmopolitan..."
+rm -rf gc6.8
+gunzip -c gc6.8.tar.gz | tar xf -
+
+# Create Cosmopolitan-compatible Makefile for gc6.8
+rm -f gc6.8/Makefile.new
+sed -e "s|^CC=.*|CC=${COSMO_CC}|" \
+    -e "s|^AR=.*|AR=${COSMO_AR}|" \
+    -e "s|^RANLIB=.*|RANLIB=${RANLIB}|" \
+    -e "s/-DLARGE_CONFIG/-DLARGE_CONFIG -DUSE_MMAP -DDONT_ADD_BYTE_AT_END/" \
+    gc6.8/Makefile > gc6.8/Makefile.new
+mv -f gc6.8/Makefile.new gc6.8/Makefile
+
+cd gc6.8
+make CC="$COSMO_CC" AR="$COSMO_AR" RANLIB="$RANLIB" test
+cd ..
+
+cp -f gc6.8/include/gc.h include/.
+cp -f gc6.8/gc.a include/libgc.a
+cp -f gc6.8/include/gc_config_macros.h include/.
+$RANLIB include/libgc.a
+rm -rf gc6.8
+
+# Build libstalin.a with Cosmopolitan compiler
+echo "Building libstalin.a with Cosmopolitan..."
+cd include
+rm -f libstalin.a
+"$COSMO_CC" -c -O2 -fomit-frame-pointer xlib-c.c
+"$COSMO_AR" rc libstalin.a xlib-c.o
+$RANLIB libstalin.a
+rm -f xlib-c.o
+cd ..
+
+# Use IA32 bootstrap for initial compilation regardless of architecture
+# We'll use the working stalin-IA32.c as the universal bootstrap
+echo "Using IA32 bootstrap for universal compilation..."
+cp -f stalin-IA32.c stalin.c
+
+# Set Cosmopolitan-specific compilation options
+ARCH_OPTS="-static"
+
+# Pass Cosmopolitan compiler to make
+exec make CC="$COSMO_CC" AR="$COSMO_AR" RANLIB="$RANLIB" ARCH_OPTS="$ARCH_OPTS"

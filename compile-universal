@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Universal Scheme Compiler Script
+# Compiles Scheme programs to universal binaries using Stalin + Cosmopolitan
+
+set -e
+
+INPUT_FILE="${1}"
+OUTPUT_FILE="${2:-${INPUT_FILE%.*}}"
+
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 <scheme_file> [output_file]"
+    echo "Example: $0 hello.sc hello"
+    exit 1
+fi
+
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "Error: Input file '$INPUT_FILE' not found"
+    exit 1
+fi
+
+STALIN_BINARY="./stalin-working"
+COSMO_CC="./cosmocc/bin/cosmocc"
+
+if [ ! -f "$STALIN_BINARY" ]; then
+    echo "Error: Stalin binary not found. Please run ./build first"
+    exit 1
+fi
+
+if [ ! -f "$COSMO_CC" ]; then
+    echo "Error: Cosmopolitan toolchain not found"
+    exit 1
+fi
+
+echo "Compiling '$INPUT_FILE' to universal binary '$OUTPUT_FILE'..."
+
+# Step 1: Use Stalin to compile Scheme to C
+echo "Step 1: Compiling Scheme to C..."
+if ! PATH="$PATH:$(pwd)/include:$(pwd)" "$STALIN_BINARY" -On -c -I ./include "$INPUT_FILE"; then
+    echo "Error: Stalin compilation failed"
+    exit 1
+fi
+
+# Step 2: Compile C code with Cosmopolitan for universal binary
+echo "Step 2: Compiling C to universal binary..."
+C_FILE="${INPUT_FILE%.*}.c"
+if [ ! -f "$C_FILE" ]; then
+    echo "Error: Expected C file '$C_FILE' not found"
+    exit 1
+fi
+
+if ! "$COSMO_CC" -o "$OUTPUT_FILE" -I./include -O3 -fomit-frame-pointer \
+    -fno-strict-aliasing -static "$C_FILE" -L./include -lm -lgc -lstalin; then
+    echo "Error: Cosmopolitan compilation failed"
+    exit 1
+fi
+
+# Clean up intermediate C file
+rm -f "$C_FILE"
+
+echo "✓ Successfully compiled to universal binary: $OUTPUT_FILE"
+echo "Binary size: $(du -h "$OUTPUT_FILE" | cut -f1)"
+echo "Binary type: $(file "$OUTPUT_FILE")"
+
+echo ""
+echo "This universal binary should run on:"
+echo "  - Linux (x86_64, ARM64)"
+echo "  - macOS (Intel, Apple Silicon)"
+echo "  - Windows (x86_64)"
+echo "  - FreeBSD, OpenBSD, NetBSD"

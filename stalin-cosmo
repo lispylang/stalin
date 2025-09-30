@@ -1,0 +1,2 @@
+#!/bin/sh
+PATH="$PATH:/Applications/lispylang/stalin/include:/Applications/lispylang/stalin" arch -x86_64 /Applications/lispylang/stalin/stalin -I /Applications/lispylang/stalin/include -copt -fno-strict-aliasing -cc "/Applications/lispylang/stalin/cosmocc/bin/cosmocc" "$@"
