@@ -5,7 +5,7 @@ case `uname -m`/`uname -s` in
   x86_64/*|amd64/*)
     echo "AMD64";;
   aarch64/*|arm64/*)
-    echo "IA32";;  # Workaround: Use IA32 for ARM64 hosts (Stalin doesn't know ARM64)
+    echo "AMD64";;  # Use AMD64 for ARM64 (both are 64-bit)
   sparc/Linux)
     echo "SPARC";;
   sparc64/Linux)

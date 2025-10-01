@@ -1,7 +1,25 @@
 # 🚀 START HERE: Stalin + Cosmopolitan Project
 
-**Last Updated:** September 30, 2025
+**Last Updated:** October 1, 2025
 **Project Status:** 🟡 75% Complete - Infrastructure Ready, Stalin Runtime Blocked
+**Latest Session:** October 1, 2025 - Debugging Complete, Root Cause Found
+
+---
+
+## 🆕 LATEST UPDATE (October 1, 2025 - Session 2)
+
+**✅ MAJOR FINDING:** Stalin's 32-bit limitation confirmed across all platforms!
+
+- **Lima VM:** Successfully set up x86_64 Linux environment with all tools
+- **Root Cause:** Stalin has hard-coded 32-bit pointer assumptions in stalin.c:692785
+- **Affects:** ALL 64-bit platforms (ARM64, x86_64, etc.) - not ARM64-specific!
+- **C→APE Pipeline:** Still 100% WORKING - Generated and tested new universal binaries
+- **Assertion Error:** `stalin-linux-x86_64` fails with `offsetof(...) == 4` on x86_64
+
+**Read the latest findings:**
+- **[VM_SESSION_REPORT_2025_10_01.md](VM_SESSION_REPORT_2025_10_01.md)** ← **LATEST** Lima VM session and 32-bit findings
+- **[CURRENT_STATUS_2025_10_01.md](CURRENT_STATUS_2025_10_01.md)** ← Earlier session results
+- **[STALIN_RUNTIME_DEBUG_REPORT.md](STALIN_RUNTIME_DEBUG_REPORT.md)** - ARM64 debugging analysis
 
 ---
 
@@ -11,36 +29,46 @@ Read these files in order based on your needs:
 
 ### 👋 New to the Project?
 
-1. **[START_HERE.md](START_HERE.md)** ← **You are here**
+1. **[VM_SESSION_REPORT_2025_10_01.md](VM_SESSION_REPORT_2025_10_01.md)** ← **READ THIS FIRST**
+   - Latest Lima VM session results
+   - 32-bit limitation findings
+   - Path forward recommendations
+
+2. **[CURRENT_STATUS_2025_10_01.md](CURRENT_STATUS_2025_10_01.md)** ← **READ THIS SECOND**
+   - Earlier debugging session results
+   - ARM64 segfault analysis
+   - PATH fix documentation
+
+3. **[START_HERE.md](START_HERE.md)** ← **You are here**
    - Project overview
    - Documentation index
    - Quick orientation
 
-2. **[QUICK_START.md](QUICK_START.md)**
+4. **[QUICK_START.md](QUICK_START.md)**
    - What works right now
    - Common commands
    - Quick wins
 
-3. **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**
+5. **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)**
    - High-level overview
    - Key achievements
    - Current blockers
 
 ### 🔧 Ready to Develop?
 
-4. **[DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md)**
+6. **[DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md)**
    - Complete current state
    - Technical details
    - File inventory
    - Performance metrics
 
-5. **[NEXT_STEPS.md](NEXT_STEPS.md)**
+7. **[NEXT_STEPS.md](NEXT_STEPS.md)**
    - Debugging roadmap
    - Alternative approaches
    - Testing strategy
    - Timeline estimates
 
-6. **[README_PROGRESS.md](README_PROGRESS.md)**
+8. **[README_PROGRESS.md](README_PROGRESS.md)**
    - Session progress report
    - What was accomplished
    - Lessons learned
@@ -48,20 +76,26 @@ Read these files in order based on your needs:
 
 ### 📚 Reference Documentation
 
-7. **[INSTALLATION.md](INSTALLATION.md)**
-   - Setup guide
-   - Cosmopolitan installation
-   - Troubleshooting
+9. **[STALIN_RUNTIME_DEBUG_REPORT.md](STALIN_RUNTIME_DEBUG_REPORT.md)**
+   - Complete debugging analysis (Oct 1, 2025 Session 1)
+   - PATH fix details
+   - ARM64 segfault investigation
+   - Recommended solutions
 
-8. **[COMPREHENSIVE_TEST_REPORT.md](COMPREHENSIVE_TEST_REPORT.md)**
-   - Detailed test results
-   - Binary validation
-   - Known issues
+10. **[INSTALLATION.md](INSTALLATION.md)**
+    - Setup guide
+    - Cosmopolitan installation
+    - Troubleshooting
 
-9. **[README](README)**
-   - Original Stalin documentation
-   - Language reference
-   - Foreign procedure interface
+11. **[COMPREHENSIVE_TEST_REPORT.md](COMPREHENSIVE_TEST_REPORT.md)**
+    - Detailed test results
+    - Binary validation
+    - Known issues
+
+12. **[README](README)**
+    - Original Stalin documentation
+    - Language reference
+    - Foreign procedure interface
 
 ---
 
@@ -77,18 +111,25 @@ Porting **Stalin** (aggressive optimizing Scheme compiler) to **Cosmopolitan Lib
 - **Size optimization** (47% reduction available)
 
 ### What's Blocked? ⚠️
-- **Stalin Scheme→C compiler** (runtime initialization issue)
+- **Stalin Scheme→C compiler** (32-bit pointer assumptions)
+- **Affects all 64-bit platforms** (ARM64, x86_64, etc.)
 - **End-to-end Scheme→C→APE pipeline** (blocked by above)
 
+### What Did We Learn? 🔬
+- **Root Cause:** stalin.c has hard-coded assertion `offsetof(...probe) == 4`
+- **32-bit Limitation:** All Stalin binaries assume 4-byte pointers
+- **Not ARM64-specific:** Also fails on x86_64 Linux
+- **Lima VM Setup:** Successfully created x86_64 VM environment
+
 ### What's the Plan? 🎯
-1. Debug Stalin runtime initialization (NEXT_STEPS.md has the roadmap)
-2. Once fixed, complete testing and validation
-3. Release as production-ready universal binary compiler
+**Option 1:** Try 32-bit x86 (i386) environment - Stalin might work there
+**Option 2:** Document limitations, focus on excellent C→APE pipeline
+**Option 3:** Long-term: Fix Stalin for 64-bit (requires Scheme knowledge)
 
 ### Timeline? ⏱️
-- **Optimistic:** 1-2 weeks
-- **Realistic:** 2-4 weeks
-- **Conservative:** 1-2 months
+- **Option 1 (32-bit):** 2-4 days, 70% success probability
+- **Option 2 (document):** 1-2 days, 100% success probability
+- **Option 3 (64-bit fix):** 4-12 weeks, 30% success probability
 
 ---
 

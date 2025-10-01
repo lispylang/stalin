@@ -1,2 +1,3 @@
-(write 42)
+;; Minimal test program
+(write 1)
 (newline)
