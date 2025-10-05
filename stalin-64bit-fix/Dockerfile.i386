@@ -1,0 +1,21 @@
+FROM --platform=linux/386 debian:bullseye
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libgc-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /stalin
+
+# Copy Stalin source
+COPY .. /stalin/
+
+# Build Stalin in 32-bit environment
+WORKDIR /stalin
+RUN ./build 2>&1 | tee /stalin-build.log || true
+
+CMD ["/bin/bash"]
