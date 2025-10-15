@@ -1,0 +1,284 @@
+# Project Memory: Stalin 64-bit Scheme Compiler
+
+**Last Updated**: October 15, 2025
+**Project**: Stalin Scheme Compiler - 64-bit Port
+
+---
+
+## Project Overview
+
+Stalin is a highly optimizing Scheme-to-C compiler originally created by Jeffrey Mark Siskind in 2006. This is a 64-bit port that enables Stalin to run on modern 64-bit systems (ARM64 and AMD64/x86-64).
+
+### Key Facts
+- **Original Version**: 0.11 (2006) - 32-bit only
+- **Current Version**: 0.11-64bit (2025)
+- **Architecture**: Now supports ARM64 (Apple Silicon) and AMD64 (x86-64)
+- **Code Size**: 699,719 lines of generated C code
+- **Conversion**: 3,426 automated pattern-based changes for 64-bit compatibility
+
+---
+
+## Recent Work (October 15, 2025)
+
+### Session Summary
+
+**Objective**: Create comprehensive test suite and CI/CD pipeline to validate the Stalin 64-bit compiler.
+
+**What Was Done**:
+
+1. **Test Infrastructure Created**
+   - Smoke tests: `hello.sc` (basic I/O), `tak.sc` (recursive functions)
+   - Integration test: `div-iter.sc` (list processing)
+   - Master test runner with colored output
+   - Expected output fixtures for validation
+   - Complete test documentation
+
+2. **GitHub Actions CI/CD**
+   - Automated testing on every push/PR
+   - Matrix testing: Ubuntu (AMD64) + macOS (ARM64)
+   - Dependency management (Boehm GC auto-install)
+   - Test artifact upload on failures
+
+3. **Architecture Support Fixed**
+   - Added ARM64 and AMD64 entries to `stalin.architectures`
+   - Updated `stalin-architecture-name` detection script
+   - Copied helper scripts to project root
+   - Fixed "Cannot find: stalin-architecture-name" error
+
+4. **Documentation**
+   - Created `CHANGELOG.md` with complete version history
+   - Created `tests/README.md` with test documentation
+   - Updated main README.md
+
+---
+
+## Project Structure
+
+```
+stalin/
+├── stalin-64bit              # Compiled 64-bit binary (2.8MB, ARM64)
+├── stalin-64bit.c             # Converted 64-bit C source (699,719 lines)
+├── stalin.c.32bit.backup      # Original 32-bit backup
+├── stalin-architecture-name   # Architecture detection helper
+├── stalin.architectures       # Architecture definitions (with ARM64/AMD64)
+├── benchmarks/                # 50+ Scheme benchmark programs
+├── tests/                     # Test suite (NEW)
+│   ├── smoke/                 # Fast validation tests
+│   ├── integration/           # Real-world tests
+│   ├── fixtures/              # Expected outputs
+│   ├── run-tests.sh           # Master test runner
+│   └── README.md              # Test documentation
+├── .github/workflows/         # CI/CD configuration
+│   └── test.yml               # GitHub Actions workflow
+├── include/                   # Helper scripts and libraries
+├── stalin-64bit-fix/          # Conversion documentation and scripts
+└── CHANGELOG.md               # Version history (NEW)
+```
+
+---
+
+## Critical Technical Details
+
+### The 64-bit Conversion
+
+**Core Problem**: Stalin's generated C code assumed 32-bit pointers
+**Solution**: Pattern-based conversion changing pointer storage types
+
+**Key Changes**:
+1. `struct w49` tag field: `unsigned` (4 bytes) → `uintptr_t` (8 bytes)
+2. Pointer casts: `(unsigned)t` → `(uintptr_t)t` (3,002 occurrences)
+3. Memory alignment: 4-byte → 8-byte alignment (295 occurrences)
+4. Size variables: `unsigned` → `size_t` (128 occurrences)
+
+### Why This Matters
+
+Stalin uses **pointer tagging** where a single `tag` field stores:
+- Type IDs (small integers like `NULL_TYPE=1036`)
+- Actual pointer values (when >= 10548)
+
+On 64-bit systems, storing 64-bit pointers in 32-bit `unsigned` truncates the high 32 bits, causing segfaults. Using `uintptr_t` (which is 8 bytes on 64-bit) fixes this.
+
+---
+
+## Architecture Support
+
+### Current Support
+
+| Architecture | Platform | Status | Pointer Size |
+|-------------|----------|---------|--------------|
+| ARM64 | macOS (M1/M2/M3) | ✅ Tested | 8 bytes |
+| AMD64 | Linux x86-64 | ✅ CI Tested | 8 bytes |
+| IA32 | Legacy x86 | ⚠️ Original 32-bit | 4 bytes |
+
+### Architecture Detection
+
+The `stalin-architecture-name` script detects:
+- `arm64/Darwin` → ARM64
+- `aarch64/*` → ARM64
+- `x86_64/*` → AMD64
+- `i[3456]86/*` → IA32
+
+---
+
+## Testing Strategy
+
+### Test Coverage
+
+**Smoke Tests** (fast, ~1-2 minutes):
+- `hello.sc`: Basic I/O, simplest program
+- `tak.sc`: Recursive functions, arithmetic (TAK benchmark)
+
+**Integration Tests** (slower, ~1-2 minutes):
+- `div-iter.sc`: Iterative list processing, memory allocation
+
+### CI/CD Validation
+
+**GitHub Actions Workflow**:
+- Triggers: Every push/PR to master/main
+- Platforms: Ubuntu (AMD64) + macOS (ARM64)
+- Steps: Install deps → Compile tests → Run tests → Upload artifacts on failure
+
+**Run Tests Locally**:
+```bash
+./tests/run-tests.sh
+```
+
+---
+
+## Common Issues & Solutions
+
+### Issue: "Cannot find: stalin-architecture-name"
+**Solution**: Helper scripts now in project root. Set PATH:
+```bash
+export PATH="$PWD:$PATH"
+```
+
+### Issue: Compilation fails with GC errors
+**Solution**: Install Boehm GC:
+```bash
+# macOS
+brew install bdw-gc
+
+# Ubuntu/Debian
+sudo apt-get install libgc-dev
+```
+
+### Issue: Binary segfaults
+**Cause**: Using 32-bit build on 64-bit system
+**Solution**: Use `stalin-64bit` binary, not `stalin-IA32`
+
+---
+
+## Git History
+
+```
+2b9ad81  test: Add comprehensive test suite and GitHub Actions CI
+613b3f6  fix: Add 64-bit architecture support for ARM64 and AMD64
+c663d98  feat: Port Stalin from 32-bit to 64-bit with minimal changes
+f431573  Imported Upstream version 0.11
+```
+
+---
+
+## Dependencies
+
+**Required**:
+- GCC or Clang compiler
+- Boehm Garbage Collector (`bdw-gc` / `libgc-dev`)
+- Standard C99 headers
+
+**Build-time** (if regenerating stalin.c from stalin.sc):
+- Working Stalin compiler (chicken-and-egg problem)
+- Or use pre-generated `stalin-64bit.c`
+
+---
+
+## Future Work
+
+**Potential Improvements**:
+1. More comprehensive test coverage (boyer.sc, complex benchmarks)
+2. Performance benchmarking vs 32-bit version
+3. Cross-platform testing (FreeBSD, OpenBSD, other Linux distros)
+4. Memory leak detection with Valgrind
+5. Modernization of code style (future phase)
+
+**NOT Planned**:
+- Changing original Stalin functionality
+- Breaking compatibility with Stalin 0.11
+- Regenerating stalin.c from stalin.sc (preserved as-is)
+
+---
+
+## Key Files to Remember
+
+**For Development**:
+- `stalin-64bit.c`: Main converted source (DO NOT regenerate from .sc)
+- `stalin-architecture-name`: Architecture detection (now supports ARM64/AMD64)
+- `stalin.architectures`: Architecture definitions (has ARM64/AMD64 entries)
+- `tests/run-tests.sh`: Run full test suite
+
+**For CI/CD**:
+- `.github/workflows/test.yml`: GitHub Actions configuration
+- Tests automatically run on push/PR
+
+**For Documentation**:
+- `README.md`: User-facing docs
+- `QUICKSTART.md`: Quick start guide
+- `CHANGELOG.md`: Version history
+- `stalin-64bit-fix/SUCCESS.md`: Complete 64-bit port report
+- `VALIDATION_REPORT.md`: Independent validation (95% credibility)
+- `PROJECT_REVIEW.md`: Comprehensive review (9.1/10 rating)
+
+---
+
+## Working Correctly
+
+✅ **Verified Working**:
+- Binary compiles without errors
+- stalin-architecture-name detects ARM64/AMD64 correctly
+- Helper scripts found in PATH
+- 64-bit struct w49 tag field (uintptr_t)
+- All 3,426 pattern conversions complete
+- Zero old 32-bit patterns remaining
+
+✅ **CI/CD**:
+- GitHub Actions workflow configured
+- Tests run on Ubuntu (AMD64) and macOS (ARM64)
+- Automatic on every push and pull request
+
+---
+
+## Important Conventions
+
+**Commit Messages**:
+- Format: `type: description`
+- Types: `feat`, `fix`, `test`, `docs`, `chore`
+- Include `🤖 Generated with Claude Code` footer
+
+**Testing**:
+- Always run `./tests/run-tests.sh` before committing
+- Add tests for new features
+- Update fixtures if output changes
+
+**Architecture**:
+- Use 64-bit types (`uintptr_t`, `size_t`) not `unsigned`
+- Maintain 8-byte alignment on 64-bit
+- Test on both ARM64 and AMD64
+
+---
+
+## Contact & Resources
+
+**Original Author**: Jeffrey Mark Siskind (Purdue University)
+**64-bit Port**: October 2025
+**License**: See README.original
+
+**Resources**:
+- Original Stalin: http://cobweb.cs.uga.edu/~dvanhorn/stalin/
+- Boehm GC: https://www.hboehm.info/gc/
+- Test Documentation: `tests/README.md`
+- Port Documentation: `stalin-64bit-fix/` directory
+
+---
+
+**Status**: ✅ 64-bit port complete, tested, and validated with CI/CD
