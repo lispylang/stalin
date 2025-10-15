@@ -2,11 +2,6 @@
 
 **A minimal-change port of the Stalin Scheme compiler from 32-bit to 64-bit**
 
-**Status:** ✅ Complete - stalin-64bit binary compiled and working
-**Date:** October 5, 2025
-
----
-
 ## What Is This?
 
 This is a **64-bit port** of the Stalin Scheme compiler (version 0.11) with **minimal changes** to preserve the original functionality while enabling it to run on modern 64-bit systems.
