@@ -1,0 +1,82 @@
+name: Test Stalin 64-bit Compiler
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            arch: AMD64
+            install_cmd: sudo apt-get update && sudo apt-get install -y libgc-dev gcc
+          - os: macos-latest
+            arch: ARM64
+            install_cmd: brew install bdw-gc
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: ${{ matrix.install_cmd }}
+
+      - name: Verify stalin-64bit binary exists
+        run: |
+          if [ ! -f "./stalin-64bit" ]; then
+            echo "Error: stalin-64bit binary not found"
+            exit 1
+          fi
+          file ./stalin-64bit
+          ls -lh ./stalin-64bit
+
+      - name: Verify architecture detection
+        run: |
+          chmod +x ./stalin-architecture-name
+          ./stalin-architecture-name
+          expected="${{ matrix.arch }}"
+          actual=$(./stalin-architecture-name)
+          if [ "$actual" != "$expected" ]; then
+            echo "Warning: Expected arch '$expected' but got '$actual'"
+          fi
+
+      - name: Setup environment
+        run: |
+          echo "${{ github.workspace }}" >> $GITHUB_PATH
+          chmod +x tests/run-tests.sh
+          chmod +x tests/smoke/*.sh
+          chmod +x tests/integration/*.sh
+
+      - name: Run smoke tests
+        run: |
+          echo "Running quick smoke tests..."
+          bash tests/smoke/test-hello.sh
+          bash tests/smoke/test-tak.sh
+
+      - name: Run integration tests
+        run: |
+          echo "Running integration tests..."
+          bash tests/integration/test-div-iter.sh
+
+      - name: Run full test suite
+        run: |
+          echo "Running complete test suite..."
+          bash tests/run-tests.sh
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failures-${{ matrix.os }}
+          path: |
+            /tmp/stalin-test-*.output
+            /tmp/stalin-test-*
+          retention-days: 7
